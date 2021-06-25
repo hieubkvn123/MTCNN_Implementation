@@ -2,7 +2,7 @@
 # Implementation of MTCNN on traffic sign detection
 
 ## MTCNN overview
-![MTCNN architecture](media/slides/mtcnn_arch.png?raw=True "MTCNN architectures")
+<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/mtcnn_arch.png" width="100%"/><br/>
 
 MTCNN is originally designed to be an algorithm to solve the problem of face localization. The main
 idea of this method is using multiple multi-task cascading neural networks to improve the quality
@@ -24,7 +24,7 @@ them. This repository employs several changes as compared to the original MTCNN 
 
 * 1. Instead of using MSE for bounding box regression, this repository employs Generalized Intersection
   over Union (GIoU) to achieve more accurate bounding box prediction.<br/>
-<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/mtcnn_arch.png" width="100%"/>
+<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/giou_loss.png" width="100%"/>
 * 2. In stage 1 (P-Net) of MTCNN, instead of retrieving region proposal using bounding box regression,
   I ran P-Net throughout the whole image to retrieve the confidence map. Then the regions proposed
   will be attained by finding contours or image segmentation algorithm like Watershed.
