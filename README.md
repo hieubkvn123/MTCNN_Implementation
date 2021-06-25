@@ -23,8 +23,8 @@ method which can be applied to a wide range of problems and traffic sign detecti
 them. This repository employs several changes as compared to the original MTCNN [paper](https://arxiv.org/abs/1604.02878)
 
 * 1. Instead of using MSE for bounding box regression, this repository employs Generalized Intersection
-  over Union (GIoU) to achieve more accurate bounding box prediction.
-  ![GIoU Loss formula](media/slides/giou_loss.png?raw=True "GIoU Loss formula")
+  over Union (GIoU) to achieve more accurate bounding box prediction.<br/>
+<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/mtcnn_arch.png" width="100%"/>
 * 2. In stage 1 (P-Net) of MTCNN, instead of retrieving region proposal using bounding box regression,
   I ran P-Net throughout the whole image to retrieve the confidence map. Then the regions proposed
   will be attained by finding contours or image segmentation algorithm like Watershed.
