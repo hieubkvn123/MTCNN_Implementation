@@ -53,3 +53,6 @@ Finally, O-Net further refines the bounding boxes and perform classification<br/
 
 ### ONet
 <img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/onet_training_results.png" width="100%"/>
+
+## References
+Dataset [URL](https://www.kaggle.com/meowmeowmeowmeowmeow/gtsrb-german-traffic-sign)
