@@ -35,6 +35,7 @@ them. This repository employs several changes as compared to the original MTCNN 
 ### Stage 1 (P-Net)
 Regions proposal will be done by segmenting the confidence map
 ![P-Net proposal results](media/slides/demo_pnet_stage1.png)
+<img src="media/slides/demo_pnet_stage1.png"/>
 
 ### Stage 2 (R-Net)
 Those regions will be refined so that it covers the object more neatly<br/>
