@@ -47,8 +47,9 @@ Finally, O-Net further refines the bounding boxes and perform classification<br/
 ## Training results
 ### PNet
 <img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/pnet_training_results.png" width="100%"/>
+
 ### RNet
-![RNet training results](media/slides/rnet_training_results.png)
+<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/rnet_training_results.png" width="100%"/>
 
 ### ONet
-![ONet training results](media/slides/onet_training_results.png)
+<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/onet_training_results.png" width="100%"/>
