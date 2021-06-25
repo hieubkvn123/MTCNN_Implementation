@@ -35,7 +35,6 @@ them. This repository employs several changes as compared to the original MTCNN 
 ### Stage 1 (P-Net)
 Regions proposal will be done by segmenting the confidence map
 ![P-Net proposal results](media/slides/demo_pnet_stage1.png)
-<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/pnet_training_results.png"/>
 
 ### Stage 2 (R-Net)
 Those regions will be refined so that it covers the object more neatly<br/>
@@ -47,7 +46,7 @@ Finally, O-Net further refines the bounding boxes and perform classification<br/
 
 ## Training results
 ### PNet
-![PNet training results](media/slides/pnet_training_results.png){ width=100% }
+<img src="https://github.com/hieubkvn123/MTCNN_Implementation/blob/main/media/slides/pnet_training_results.png" style="width:100%"/>
 
 ### RNet
 ![RNet training results](media/slides/rnet_training_results.png)
