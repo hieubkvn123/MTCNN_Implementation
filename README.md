@@ -8,13 +8,13 @@ MTCNN is originally designed to be an algorithm to solve the problem of face loc
 idea of this method is using multiple multi-task cascading neural networks to improve the quality
 and accuracy of face detection. The algorithm is divided into 3 stages:
 
-* Stage 0 : The input image will be resized by the same factor multiple times to form an 
+* 1. Stage 0 : The input image will be resized by the same factor multiple times to form an 
   image pyramid
-* 1. Stage 1 (P-Net) - Region proposals : The image pyramid will then be fed into P-Net
+* 2. Stage 1 (P-Net) - Region proposals : The image pyramid will then be fed into P-Net
   to output proposals of region with possible presence of objects.
-* 2. Stage 2 (R-Net) - Refinement : The proposed regions will then be fed into R-Net to
+* 3. Stage 2 (R-Net) - Refinement : The proposed regions will then be fed into R-Net to
   refine the bounding boxes.
-* 3. Stage 3 (O-Net) - Output : The objects detected by R-Net will then be described in 
+* 4. Stage 3 (O-Net) - Output : The objects detected by R-Net will then be described in 
   more details by O-Net by facial landmark detection.
 
 ## Applications of MTCNN in traffic sign detection
@@ -37,11 +37,11 @@ Regions proposal will be done by segmenting the confidence map
 ![P-Net proposal results](media/slides/demo_pnet_stage1.png)
 
 ### Stage 2 (R-Net)
-Those regions will be refined so that it covers the object more neatly
+Those regions will be refined so that it covers the object more neatly<br/>
 ![R-Net refinement](media/slides/demo_rnet_stage2.png)
 
 ### Stage 3 (O-Net)
-Finally, O-Net further refines the bounding boxes and perform classification
+Finally, O-Net further refines the bounding boxes and perform classification<br/>
 ![O-Net output](media/slides/demo_onet_stage3.png)
 
 ## Training results
