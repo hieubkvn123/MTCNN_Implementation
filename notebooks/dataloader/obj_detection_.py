@@ -2,7 +2,7 @@ import multiprocessing
 import numpy as np
 import tensorflow as tf
 
-from obj_detection_utils import parse_pascal_voc, parse_darknet
+from .obj_detection_utils import parse_pascal_voc, parse_darknet
 
 def batch_dataset(dataset,
                   batch_size,
@@ -111,6 +111,8 @@ def disk_image_batch_dataset(directory,
         raise Exception(f"There is no image in {os.path.join(directory, img_dir)}")
 
     memory_data = (img_paths, bboxes, labels)
+    n_classes = len(np.unique(labels))
+    dataset_len = len(img_paths) // batch_size
 
     @tf.function
     def parse_fn(path, bbox, label):
@@ -154,7 +156,7 @@ def disk_image_batch_dataset(directory,
 
         ### End of crop to bounding box ###
 
-        return (img, bbox, label)
+        return img, (bbox, label)
 
     def map_fn_(path, bbox, label):
         return parse_fn(path, bbox, label)# map_fn(*parse_fn_with_label(*args))
@@ -171,5 +173,5 @@ def disk_image_batch_dataset(directory,
                                         shuffle_buffer_size=shuffle_buffer_size,
                                         repeat=repeat)
 
-    return dataset
+    return n_classes, dataset_len, dataset
 

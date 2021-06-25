@@ -4,8 +4,8 @@ import glob
 import numpy as np
 import tensorflow as tf
 
-from obj_detection_ import *
-from tfrecord import *
+from .obj_detection_ import *
+from .tfrecord import *
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
@@ -57,7 +57,7 @@ class DataLoader:
 		else:
 			self.map_fn = self.get_default_map_fn(self.img_size)
 
-		self.train_dataset = disk_image_batch_dataset(directory,
+		self.n_classes, self.dataset_len, self.train_dataset = disk_image_batch_dataset(directory,
 										  self.format_,
 										  self.batch_size,
 										  img_dir=img_dir,
@@ -68,7 +68,7 @@ class DataLoader:
 										  shuffle=shuffle,
 										  repeat=repeat)
 		
-		self.val_dataset = disk_image_batch_dataset(directory,
+		self.val_len, self.val_dataset = disk_image_batch_dataset(directory,
 										  self.format_,
 										  self.batch_size,
 										  img_dir=img_dir,
@@ -77,7 +77,7 @@ class DataLoader:
 										  drop_remainder=drop_remainder,
 										  map_fn=self.map_fn,
 										  shuffle=shuffle,
-										  repeat=repeat)
+										  repeat=repeat)[1:]
 
 	def get_train_dataset(self):
 		return self.train_dataset

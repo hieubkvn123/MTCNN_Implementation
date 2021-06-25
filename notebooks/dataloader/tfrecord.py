@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from dataset_ import batch_dataset
+from .dataset_ import batch_dataset
 
 def _bytes_feature(value):
   """Returns a bytes_list from a string / byte."""

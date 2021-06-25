@@ -4,8 +4,8 @@ import glob
 import numpy as np
 import tensorflow as tf
 
-from dataset_ import *
-from tfrecord import *
+from .dataset_ import *
+from .tfrecord import *
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
