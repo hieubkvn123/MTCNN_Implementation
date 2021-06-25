@@ -46,7 +46,7 @@ Finally, O-Net further refines the bounding boxes and perform classification<br/
 
 ## Training results
 ### PNet
-![PNet training results](media/slides/pnet_training_results.png){width:"100%"}
+![PNet training results](media/slides/pnet_training_results.png){ width="100%" }
 
 ### RNet
 ![RNet training results](media/slides/rnet_training_results.png)
