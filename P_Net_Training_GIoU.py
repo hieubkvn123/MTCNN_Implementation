@@ -188,6 +188,7 @@ def train_step(model, batch):
         prob = tf.one_hot(prob, depth=n_classes)
         pr_prob, pr_bbox = model(img, training=True)
         
+        # print(pr_prob.shape, prob.shape)
         cls_loss = bce(prob, pr_prob)
         bbx_loss = giou(bbox, pr_bbox)
 
