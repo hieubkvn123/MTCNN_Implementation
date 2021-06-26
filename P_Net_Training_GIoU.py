@@ -215,6 +215,10 @@ def validation_step(model, batch):
     return cls_loss, bbx_loss, acc
 
 def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, validation_steps=100, epochs=100):
+    if(os.path.exists(weights_file)):
+        print('Checkpoint exists, loading to model ... ')
+        model.load_weights(weights_file)
+
     for i in range(epochs):
         print(f'Epoch {i+1}/{epochs}')
         with tqdm.tqdm(total=steps_per_epoch) as pbar:
@@ -238,8 +242,8 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
         print('Saving model weights ... ')
         model.save_weights(weights_file)
         print('Validating ... ')
-        with tqdm.tqdm(total=validation_steps, colour='green') as pbar:
-            for j in range(validation_steps):
+        with tqdm.tqdm(total=validation_steps // 5, colour='green') as pbar:
+            for j in range(validation_steps // 5):
                 batch = next(iter(val_dataset))
                 cls_loss, bbox_loss, acc = validation_step(model, batch)
 
