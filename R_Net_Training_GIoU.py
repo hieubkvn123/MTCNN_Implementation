@@ -1,5 +1,6 @@
 import os
 import cv2
+import json
 import tqdm
 import time
 import shutil
@@ -174,7 +175,7 @@ configs = {
 }
 rnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
                         n_classes=configs['n_classes'])
-print(f'[INFO] Storing R-Net configuration to {pnet_configs}')
+print(f'[INFO] Storing R-Net configuration to {rnet_configs}')
 with open(rnet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)
 
