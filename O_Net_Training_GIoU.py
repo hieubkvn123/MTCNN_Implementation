@@ -1,6 +1,5 @@
 import os
 import cv2
-import json
 import tqdm
 import time
 import shutil
@@ -38,7 +37,7 @@ pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 rnet_weights = f'weights/{weights_dir}/rnet.weights.hdf5'
 onet_weights = f'weights/{weights_dir}/onet.weights.hdf5'
 
-pnet_configs = f'weights/{weights_dir}/pnet.json'
+onet_configs = f'weights/{weights_dir}/onet.json'
 
 if(not os.path.exists(f'weights/{weights_dir}')):
     print('[INFO] Created weight directory ...')
@@ -78,12 +77,12 @@ test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
 ### Loading dataset ###
 ### Creating the train loader ###
 train_loader = DataLoader(train_dir, format_='darknet',
-                    color_space='rgb', img_size=input_dim, batch_size=64,
+                    color_space='rgb', img_size=input_dim*4, batch_size=64,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
 test_loader = DataLoader(test_dir, format_='darknet',
-                    color_space='rgb', img_size=input_dim, batch_size=64,
+                    color_space='rgb', img_size=input_dim*4, batch_size=64,
                    crop_to_bounding_box=False)
 train_dataset = train_loader.get_train_dataset()
 val_dataset = train_loader.get_val_dataset()
@@ -168,18 +167,18 @@ def GIoU(bboxes_1, bboxes_2, regularization=False):
 
 n_classes = train_loader.n_classes
 configs = {
-    'input_shape' : input_dim,
+    'input_shape' : input_dim*4,
     'batch_norm' : True,
     'dropout' : True,
     'n_classes' : n_classes
 }
-pnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
+onet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
                         n_classes=configs['n_classes'])
-print(f'[INFO] Storing P-Net configuration to {pnet_configs}')
-with open(pnet_configs, 'w') as config_file:
+print(f'[INFO] Storing O-Net configuration to {pnet_configs}')
+with open(onet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)
 
-print(pnet.summary())
+print(onet.summary())
 
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
@@ -268,5 +267,5 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 })
                 pbar.update(1)
 
-train(pnet, train_dataset, val_dataset, pnet_weights, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps, epochs=40)
+train(onet, train_dataset, val_dataset, onet_weights, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps, epochs=40)
 print('[INFO] Training halted, plotting training history ... ')
