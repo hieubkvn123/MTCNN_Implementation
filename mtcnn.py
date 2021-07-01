@@ -263,6 +263,15 @@ class MTCNN:
         return boxes, labels
     
 mtcnn = MTCNN('weights/road_signs_w_dataloader')
-img = cv2.imread('test/test1.jpg')
+
+test_file = 'test2.jpg'
+img = cv2.imread(f'test/{test_file}')
 boxes, labels = mtcnn.predict(img)
-print(boxes, labels)
+
+for box, label in zip(boxes, labels):
+    x, y, w, h = box
+
+    img = cv2.rectangle(img, (x, y), (x+w, y+h), (0,255,0), 2)
+
+cv2.imwrite(f'outputs/{test_file}', img)
+
