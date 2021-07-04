@@ -184,7 +184,7 @@ print(rnet.summary())
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
 validation_steps = train_loader.val_len
-bce  = CategoricalCrossentropy(from_logits=False) # BinaryCrossentropy(from_logits=False)
+bce  = BinaryCrossentropy(from_logits=False) # CategoricalCrossentropy(from_logits=False) 
 giou = tfa.losses.GIoULoss()
 opt = Adam(lr=0.0001, amsgrad=True)
 accuracy = tf.keras.metrics.Accuracy()

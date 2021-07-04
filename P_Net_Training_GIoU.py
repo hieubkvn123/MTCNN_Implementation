@@ -184,9 +184,9 @@ print(pnet.summary())
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
 validation_steps = train_loader.val_len
-bce  = CategoricalCrossentropy(from_logits=False) # BinaryCrossentropy(from_logits=False)
+bce  = BinaryCrossentropy(from_logits=False)
 giou = tfa.losses.GIoULoss()
-opt = Adam(lr=0.0001, amsgrad=True)
+opt = Adam(lr=0.00001, amsgrad=True)
 accuracy = tf.keras.metrics.Accuracy()
 
 @tf.function
@@ -199,7 +199,8 @@ def train_step(model, batch):
         prob = tf.expand_dims(prob, axis=1)
         prob = tf.one_hot(prob, depth=n_classes)
         pr_prob, pr_bbox = model(img, training=True)
-        
+        acc = accuracy(tf.math.argmax(prob, axis=3), tf.math.argmax(pr_prob, axis=3))
+
         # print(pr_prob.shape, prob.shape)
         cls_loss = bce(prob, pr_prob)
         bbx_loss = giou(bbox, pr_bbox)
@@ -209,7 +210,7 @@ def train_step(model, batch):
         gradients = tape.gradient(loss, model.trainable_variables)
         opt.apply_gradients(zip(gradients, model.trainable_variables))
 
-    return cls_loss, bbx_loss
+    return cls_loss, bbx_loss, acc
 
 @tf.function
 def validation_step(model, batch):
@@ -238,9 +239,10 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
             for j in range(steps_per_epoch):
                 batch = next(iter(dataset))
 
-                cls_loss, bbox_loss = train_step(model, batch)
+                cls_loss, bbox_loss, acc = train_step(model, batch)
                 cls_loss = cls_loss.numpy()
                 bbox_loss = bbox_loss.numpy()
+                acc = acc.numpy()
 
                 # if((j + 1) % 100 == 0):
                 #     print(f'[*] Batch #{j+1}, Epoch #{i+1}: Classification loss = {cls_loss:.4f}, BBox loss = {bbox_loss:.4f}')
@@ -248,7 +250,8 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 pbar.set_postfix({
                     'batch_id' : j+1,
                     'cls_loss': f'{cls_loss:.4f}',
-                    'bbox_loss' : f'{bbox_loss:.4f}'
+                    'bbox_loss' : f'{bbox_loss:.4f}',
+                    'accuracy' : f'{acc:.4f}'
                 })
                 pbar.update(1)
 
