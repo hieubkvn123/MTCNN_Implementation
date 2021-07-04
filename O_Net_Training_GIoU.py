@@ -29,7 +29,7 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 ### Some constants ###
 input_dim = 12 # 48
 # weights_dir = 'road_signs_1'
-weights_dir = 'road_signs_w_dataloader'
+weights_dir = 'road_signs_w_dataloader_new'
 pnet_tensorboard_logdir = 'pnet_logs'
 rnet_tensorboard_logdir = 'rnet_logs'
 onet_tensorboard_logdir = 'onet_logs'

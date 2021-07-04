@@ -29,7 +29,7 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 ### Some constants ###
 input_dim = 12 # 48
 # weights_dir = 'road_signs_1'
-weights_dir = 'road_signs_w_dataloader'
+weights_dir = 'road_signs_w_dataloader_new'
 pnet_tensorboard_logdir = 'pnet_logs'
 rnet_tensorboard_logdir = 'rnet_logs'
 onet_tensorboard_logdir = 'onet_logs'
@@ -72,7 +72,7 @@ onet_early_stop1 = EarlyStopping(monitor='val_probability_loss', patience=15, ve
 onet_early_stop2 = EarlyStopping(monitor='val_bbox_regression_loss', patience=15, verbose=1)
 onet_callbacks = [onet_tensorboard, onet_checkpoint]
 
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/train"
+train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj"
 test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
 
 ### Loading dataset ###
