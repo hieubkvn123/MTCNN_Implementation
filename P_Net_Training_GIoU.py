@@ -72,21 +72,26 @@ onet_early_stop1 = EarlyStopping(monitor='val_probability_loss', patience=15, ve
 onet_early_stop2 = EarlyStopping(monitor='val_bbox_regression_loss', patience=15, verbose=1)
 onet_callbacks = [onet_tensorboard, onet_checkpoint]
 
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj"
+train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
+val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
 test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
 
 ### Loading dataset ###
 ### Creating the train loader ###
 train_loader = DataLoader(train_dir, format_='darknet',
-                    color_space='rgb', img_size=input_dim, batch_size=64,
+                    color_space='rgb', img_size=input_dim, batch_size=16,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
-test_loader = DataLoader(test_dir, format_='darknet',
-                    color_space='rgb', img_size=input_dim, batch_size=64,
+val_loader = DataLoader(val_dir, format_='darknet',
+                    color_space='rgb', img_size=input_dim, batch_size=16,
                    crop_to_bounding_box=False)
+
 train_dataset = train_loader.get_train_dataset()
-val_dataset = train_loader.get_val_dataset()
+val_dataset = val_loader.get_train_dataset()
+
+### Creating the val loader ###
+
 
 ### Implement the P-Net architecture ###
 def conv_block(in_filters, out_filters, kernel_size=3, batch_norm=False):
@@ -183,7 +188,7 @@ print(pnet.summary())
 
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
-validation_steps = train_loader.val_len
+validation_steps = val_loader.dataset_len
 bce  = BinaryCrossentropy(from_logits=False)
 giou = tfa.losses.GIoULoss()
 opt = Adam(lr=0.00001, amsgrad=True)
@@ -248,7 +253,6 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 #     print(f'[*] Batch #{j+1}, Epoch #{i+1}: Classification loss = {cls_loss:.4f}, BBox loss = {bbox_loss:.4f}')
 
                 pbar.set_postfix({
-                    'batch_id' : j+1,
                     'cls_loss': f'{cls_loss:.4f}',
                     'bbox_loss' : f'{bbox_loss:.4f}',
                     'accuracy' : f'{acc:.4f}'
@@ -264,7 +268,6 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 cls_loss, bbox_loss, acc = validation_step(model, batch)
 
                 pbar.set_postfix({
-                    'batch_id' : j + 1,
                     'cls_loss' : f'{cls_loss:.4f}',
                     'bbox_loss' : f'{bbox_loss:.4f}',
                     'accuracy' : f'{acc:.2f}'
