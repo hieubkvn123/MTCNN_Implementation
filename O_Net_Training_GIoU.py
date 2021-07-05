@@ -268,5 +268,5 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 })
                 pbar.update(1)
 
-train(onet, train_dataset, val_dataset, onet_weights, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps, epochs=40)
+train(onet, train_dataset, val_dataset, onet_weights, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps, epochs=epochs)
 print('[INFO] Training halted, plotting training history ... ')
