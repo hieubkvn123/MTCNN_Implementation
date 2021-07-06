@@ -17,6 +17,7 @@ from sklearn.preprocessing import LabelEncoder
 ### Tensorflow dependencies ###
 import tensorflow as tf
 import tensorflow_addons as tfa
+from custom_giou import GIoU
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
@@ -185,7 +186,7 @@ print(onet.summary())
 steps_per_epoch = train_loader.dataset_len
 validation_steps = train_loader.val_len
 bce  = CategoricalCrossentropy(from_logits=False) # BinaryCrossentropy(from_logits=False)
-giou = tfa.losses.GIoULoss()
+giou = GIoU(mode='giou', reg_factor=2e-4) # tfa.losses.GIoULoss()
 opt = Adam(lr=0.0001, amsgrad=True)
 accuracy = tf.keras.metrics.Accuracy()
 
