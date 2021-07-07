@@ -30,7 +30,7 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 ### Some constants ###
 input_dim = 12 # 48
 # weights_dir = 'road_signs_1'
-weights_dir = 'road_signs_w_dataloader_new'
+weights_dir = 'road_signs_w_dataloader_1'
 pnet_tensorboard_logdir = 'pnet_logs'
 rnet_tensorboard_logdir = 'rnet_logs'
 onet_tensorboard_logdir = 'onet_logs'
@@ -211,6 +211,8 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
     for i in range(epochs):
         print(f'Epoch {i+1}/{epochs}')
         with tqdm.tqdm(total=steps_per_epoch) as pbar:
+            cls_losses = []
+            box_losses = []
             for j in range(steps_per_epoch):
                 batch = next(iter(dataset))
 
@@ -219,12 +221,15 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 bbox_loss = bbox_loss.numpy()
                 acc = acc.numpy()
 
+                cls_losses.append(cls_loss)
+                box_losses.append(bbox_loss)
+
                 # if((j + 1) % 100 == 0):
                 #     print(f'[*] Batch #{j+1}, Epoch #{i+1}: Classification loss = {cls_loss:.4f}, BBox loss = {bbox_loss:.4f}')
 
                 pbar.set_postfix({
-                    'cls_loss': f'{cls_loss:.4f}',
-                    'bbox_loss' : f'{bbox_loss:.4f}',
+                    'cls_loss': f'{np.array(cls_losses).mean():.4f}',
+                    'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
                     'accuracy' : f'{acc:.4f}'
                 })
                 pbar.update(1)
@@ -233,13 +238,18 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
         model.save_weights(weights_file)
         print('Validating ... ')
         with tqdm.tqdm(total=validation_steps // 5, colour='green') as pbar:
+            cls_losses = []
+            box_losses = []
+
             for j in range(validation_steps // 5):
                 batch = next(iter(val_dataset))
                 cls_loss, bbox_loss, acc = validation_step(model, batch)
+                cls_losses.append(cls_loss)
+                box_losses.append(bbox_loss)
 
                 pbar.set_postfix({
-                    'cls_loss' : f'{cls_loss:.4f}',
-                    'bbox_loss' : f'{bbox_loss:.4f}',
+                    'cls_loss' : f'{np.array(cls_losses).mean():.4f}',
+                    'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
                     'accuracy' : f'{acc:.2f}'
                 })
                 pbar.update(1)
