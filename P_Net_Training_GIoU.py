@@ -23,7 +23,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import MeanIoU
-from tensorflow.keras.regularizers import l2
+from tensorflow.keras.regularizers import l2, l1
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
@@ -97,7 +97,7 @@ val_dataset = val_loader.get_train_dataset()
 ### Implement the P-Net architecture ###
 def conv_block(in_filters, out_filters, kernel_size=3, batch_norm=False):
     inputs = Input(shape=(None, None, in_filters))
-    p_layer = Conv2D(out_filters, kernel_size=kernel_size, strides=(1, 1), padding="valid", kernel_regularizer=l2(2e-4))(inputs)
+    p_layer = Conv2D(out_filters, kernel_size=kernel_size, strides=(1, 1), padding="valid", kernel_regularizer=l1(2e-4))(inputs)
     if(batch_norm) : p_layer = BatchNormalization()(p_layer)
     p_layer = PReLU(shared_axes=[1, 2])(p_layer)
 
@@ -126,15 +126,15 @@ def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, n_classes
         if(input_shape >= 112):
             p_layer = conv_block(10, 10, kernel_size=3, batch_norm=batch_norm)(p_layer)
 
-    p_layer = Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding="valid", kernel_regularizer=l2(2e-4))(p_layer)
+    p_layer = Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding="valid", kernel_regularizer=l1(2e-4))(p_layer)
     p_layer = PReLU(shared_axes=[1, 2])(p_layer)
 
-    p_layer = Conv2D(32, kernel_size=(3, 3), strides=(1, 1), padding="valid", kernel_regularizer=l2(2e-4))(p_layer)
+    p_layer = Conv2D(32, kernel_size=(3, 3), strides=(1, 1), padding="valid", kernel_regularizer=l1(2e-4))(p_layer)
     p_layer = PReLU(shared_axes=[1, 2])(p_layer)
     if(dropout) : p_layer = Dropout(0.5)(p_layer)
 
-    p_layer_out1 = Conv2D(n_classes, kernel_size=(1, 1), strides=(2, 2))(p_layer)
-    p_layer_out1 = Softmax(axis=3, name='probability')(p_layer_out1)
+    p_layer_out1 = Conv2D(n_classes, kernel_size=(1, 1), strides=(2, 2), kernel_regularizer=l1(2e-4))(p_layer)
+    # p_layer_out1 = Softmax(axis=3, name='probability')(p_layer_out1)
     p_layer_out2 = Conv2D(4, kernel_size=(1, 1), strides=(2, 2), activation='sigmoid', name='bbox_regression')(p_layer)
 
     p_net = Model(inputs, [p_layer_out1, p_layer_out2], name='P-Net')
@@ -159,7 +159,7 @@ print(pnet.summary())
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
 validation_steps = val_loader.dataset_len
-bce  = BinaryCrossentropy(from_logits=False)
+bce  = BinaryCrossentropy(from_logits=True)
 giou = GIoU(mode='giou', reg_factor=2e-4) # tfa.losses.GIoULoss()
 opt = Adam(lr=0.00001, amsgrad=True)
 accuracy = tf.keras.metrics.Accuracy()
@@ -203,11 +203,34 @@ def validation_step(model, batch):
 
     return cls_loss, bbx_loss, acc
 
+def make_pnet_confidence_map(model, test_img_file, out_file, output_dir='pnet_conf_maps', threshold=0.6):
+    if(not os.path.exists(output_dir)):
+        os.mkdir(output_dir)
+    img = cv2.imread(test_img_file)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = (img - 127.5) / 127.5
+
+    prediction = model.predict(np.array([img]))
+
+    confidence = prediction[0][0]
+    conf_map = confidence[:,:,1]
+    conf_map = tf.sigmoid(conf_map).numpy()
+    conf_map[conf_map >= threshold] = 255
+    conf_map[conf_map < threshold] = 0
+    conf_map = conf_map.astype(np.uint8)
+
+    
+    output_file = f'{output_dir}/{out_file}.png'
+    plt.imshow(conf_map)
+    plt.title(f'GIF #{out_file}')
+    plt.savefig(output_file)
+
 def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, validation_steps=100, epochs=100):
     if(os.path.exists(weights_file)):
         print('Checkpoint exists, loading to model ... ')
         model.load_weights(weights_file)
 
+    num_gif_files = 0
     for i in range(epochs):
         print(f'Epoch {i+1}/{epochs}')
         with tqdm.tqdm(total=steps_per_epoch) as pbar:
@@ -224,8 +247,9 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 cls_losses.append(cls_loss)
                 box_losses.append(bbox_loss)
 
-                # if((j + 1) % 100 == 0):
-                #     print(f'[*] Batch #{j+1}, Epoch #{i+1}: Classification loss = {cls_loss:.4f}, BBox loss = {bbox_loss:.4f}')
+                if((j+1) % 100 == 0):
+                    num_gif_files += 1
+                    make_pnet_confidence_map(pnet, 'test/test1.jpg', num_gif_files)
 
                 pbar.set_postfix({
                     'cls_loss': f'{np.array(cls_losses).mean():.4f}',
