@@ -30,7 +30,8 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 ### Some constants ###
 input_dim = 12 # 48
 # weights_dir = 'road_signs_1'
-weights_dir = 'road_signs_w_dataloader_1'
+# weights_dir = 'road_signs_w_dataloader_1'
+weights_dir = 'road_signs_w_dataloadr_l2norm'
 pnet_tensorboard_logdir = 'pnet_logs'
 rnet_tensorboard_logdir = 'rnet_logs'
 onet_tensorboard_logdir = 'onet_logs'
@@ -106,7 +107,7 @@ def conv_block(in_filters, out_filters, kernel_size=3, batch_norm=False):
     block = Model(inputs = inputs, outputs=p_layer)
     return block
 
-def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, n_classes=2, activation='relu'):
+def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, l2_norm=False, n_classes=2, activation='relu'):
     if(input_shape is not None):
         if(input_shape not in [12, 24, 48, 112, 224]):
             raise Exception('Input shape must be in 12, 24, 48')
@@ -133,6 +134,10 @@ def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, n_classes
     p_layer = PReLU(shared_axes=[1, 2])(p_layer)
     if(dropout) : p_layer = Dropout(0.5)(p_layer)
 
+
+    if(l2_norm):
+        p_layer = Lambda(lambda x : K.l2_normalize(x, axis=3))(p_layer)
+
     p_layer_out1 = Conv2D(n_classes, kernel_size=(1, 1), strides=(2, 2), kernel_regularizer=l1(2e-4))(p_layer)
     # p_layer_out1 = Softmax(axis=3, name='probability')(p_layer_out1)
     p_layer_out2 = Conv2D(4, kernel_size=(1, 1), strides=(2, 2), activation='sigmoid', name='bbox_regression')(p_layer)
@@ -148,8 +153,10 @@ configs = {
     'dropout' : True,
     'n_classes' : n_classes
 }
+
+### Experimenting with l2 normalization on the final logit layer ###
 pnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
-                        n_classes=configs['n_classes'])
+                        n_classes=configs['n_classes'], l2_norm=True)
 print(f'[INFO] Storing P-Net configuration to {pnet_configs}')
 with open(pnet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)
@@ -249,7 +256,7 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
 
                 if((j+1) % 100 == 0):
                     num_gif_files += 1
-                    make_pnet_confidence_map(pnet, 'test/test1.jpg', num_gif_files)
+                    make_pnet_confidence_map(pnet, 'test/test.jpg', num_gif_files)
 
                 pbar.set_postfix({
                     'cls_loss': f'{np.array(cls_losses).mean():.4f}',
