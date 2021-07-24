@@ -18,6 +18,7 @@ from sklearn.preprocessing import LabelEncoder
 import tensorflow as tf
 import tensorflow_addons as tfa
 from custom_giou import GIoU
+from torch.utils.tensorboard import SummaryWriter
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K
@@ -205,9 +206,15 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
         print('Checkpoint exists, loading to model ... ')
         model.load_weights(weights_file)
 
+    writer = SummaryWriter(log_di=rnet_tensorboard_logdir)
+    summary = {'train_bbox_loss' : 0, 'train_cls_loss' : 0, 'train_acc' : 0,
+            'val_bbox_loss' : 0, 'val_cls_loss' : 0, 'val_acc' : 0}
     for i in range(epochs):
         print(f'Epoch {i+1}/{epochs}')
         with tqdm.tqdm(total=steps_per_epoch) as pbar:
+            cls_losses = []
+            box_losses = []
+            accuracies = []
             for j in range(steps_per_epoch):
                 batch = next(iter(dataset))
 
@@ -216,8 +223,9 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 bbox_loss = bbox_loss.numpy()
                 acc = acc.numpy()
 
-                # if((j + 1) % 100 == 0):
-                #     print(f'[*] Batch #{j+1}, Epoch #{i+1}: Classification loss = {cls_loss:.4f}, BBox loss = {bbox_loss:.4f}')
+                cls_losses.append(cls_loss)
+                box_losses.append(bbox_loss)
+                accuracies.append(acc)
 
                 pbar.set_postfix({
                     'cls_loss': f'{cls_loss:.4f}',
@@ -226,13 +234,25 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 })
                 pbar.update(1)
 
+            summary['train_bbox_loss'] = np.array(box_losses).mean()
+            summary['train_cls_loss'] = np.array(cls_losses).mean()
+            summary['train_acc'] = np.array(accuracies).mean()
+
         print('Saving model weights ... ')
         model.save_weights(weights_file)
         print('Validating ... ')
         with tqdm.tqdm(total=validation_steps // 5, colour='green') as pbar:
+            cls_losses = []
+            box_losses = []
+            accuracies = []
+
             for j in range(validation_steps // 5):
                 batch = next(iter(val_dataset))
                 cls_loss, bbox_loss, acc = validation_step(model, batch)
+
+                cls_losses.append(cls_loss)
+                box_losses.append(bbox_loss)
+                accuracies.append(acc)
 
                 pbar.set_postfix({
                     'cls_loss' : f'{cls_loss:.4f}',
@@ -240,6 +260,29 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                     'accuracy' : f'{acc:.2f}'
                 })
                 pbar.update(1)
+            summary['val_bbox_loss'] = np.array(box_losses).mean()
+            summary['val_cls_loss'] = np.array(cls_losses).mean()
+            summary['val_acc'] = np.array(accuracies).mean()
+
+        # Log bounding box losses to tensorboard log dir
+        writer.add_scalars('bounding_box_loss', {
+            'train' : summary['train_bbox_loss'],
+            'val' : summary['val_bbox_loss']
+        }, i)
+
+        # Log classification losses to tensorboard log dir
+        writer.add_scalars('classification_loss', {
+            'train' : summary['train_cls_loss'],
+            'val' : summary['val_cls_loss']
+        }, i)
+
+        # Log accuracies to tensorboard log dir
+        writer.add_scalars('accuracy', {
+            'train' : summary['train_acc'],
+            'val' : summary['val_acc']
+        }, i)
+
+        writer.flush()
 
 train(rnet, train_dataset, val_dataset, rnet_weights, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps, epochs=epochs)
 print('[INFO] Training halted, plotting training history ... ')

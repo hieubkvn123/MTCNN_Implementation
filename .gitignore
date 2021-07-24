@@ -1,2 +1,3 @@
 *.gif
 media/*.gif
+__pycache__
