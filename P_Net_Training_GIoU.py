@@ -18,6 +18,7 @@ from sklearn.preprocessing import LabelEncoder
 import tensorflow as tf
 import tensorflow_addons as tfa
 from custom_giou import GIoU
+from train_utils import train_step, validation_step, make_pnet_confidence_map
 from torch.utils.tensorboard import SummaryWriter
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
@@ -61,19 +62,6 @@ if(os.path.exists(onet_tensorboard_logdir)):
     
 epochs = 100 # 500
 batch_size = 16
-pnet_tensorboard = TensorBoard(log_dir=pnet_tensorboard_logdir)
-pnet_checkpoint = ModelCheckpoint(pnet_weights, save_weights_only=True)
-pnet_callbacks = [pnet_tensorboard, pnet_checkpoint]
-
-rnet_tensorboard = TensorBoard(log_dir=rnet_tensorboard_logdir)
-rnet_checkpoint = ModelCheckpoint(rnet_weights, save_weights_only=True)
-rnet_callbacks = [rnet_tensorboard, rnet_checkpoint]
-
-onet_tensorboard = TensorBoard(log_dir=onet_tensorboard_logdir)
-onet_checkpoint = ModelCheckpoint(onet_weights, save_weights_only=True)
-onet_early_stop1 = EarlyStopping(monitor='val_probability_loss', patience=15, verbose=1)
-onet_early_stop2 = EarlyStopping(monitor='val_bbox_regression_loss', patience=15, verbose=1)
-onet_callbacks = [onet_tensorboard, onet_checkpoint]
 
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
@@ -167,73 +155,8 @@ print(pnet.summary())
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
 validation_steps = val_loader.dataset_len
-bce  = BinaryCrossentropy(from_logits=True)
-giou = GIoU(mode='giou', reg_factor=2e-4) # tfa.losses.GIoULoss()
-opt = Adam(lr=0.00001, amsgrad=True)
-accuracy = tf.keras.metrics.Accuracy()
 
-@tf.function
-def train_step(model, batch):
-    with tf.GradientTape() as tape:
-        img, (bbox, prob) = batch
-        bbox = tf.expand_dims(bbox, axis=1)
-        bbox = tf.expand_dims(bbox, axis=1)
-        prob = tf.expand_dims(prob, axis=1)
-        prob = tf.expand_dims(prob, axis=1)
-        prob = tf.one_hot(prob, depth=n_classes)
-        pr_prob, pr_bbox = model(img, training=True)
-        acc = accuracy(tf.math.argmax(prob, axis=3), tf.math.argmax(pr_prob, axis=3))
-
-        # print(pr_prob.shape, prob.shape)
-        cls_loss = bce(prob, pr_prob)
-        bbx_loss = giou(bbox, pr_bbox)
-
-        loss = cls_loss + bbx_loss
-
-        gradients = tape.gradient(loss, model.trainable_variables)
-        opt.apply_gradients(zip(gradients, model.trainable_variables))
-
-    return cls_loss, bbx_loss, acc
-
-@tf.function
-def validation_step(model, batch):
-    img, (bbox, prob) = batch
-    bbox = tf.expand_dims(bbox, axis=1)
-    bbox = tf.expand_dims(bbox, axis=1)
-    prob = tf.expand_dims(prob, axis=1)
-    prob = tf.expand_dims(prob, axis=1)
-    prob = tf.one_hot(prob, depth=n_classes)
-    pr_prob, pr_bbox = model(img, training=False)
-
-    bbx_loss = giou(bbox, pr_bbox)
-    cls_loss = bce(prob, pr_prob)
-    acc = accuracy(tf.math.argmax(prob, axis=3), tf.math.argmax(pr_prob, axis=3))
-
-    return cls_loss, bbx_loss, acc
-
-def make_pnet_confidence_map(model, test_img_file, out_file, output_dir='pnet_conf_maps', threshold=0.6):
-    if(not os.path.exists(output_dir)):
-        os.mkdir(output_dir)
-    img = cv2.imread(test_img_file)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = (img - 127.5) / 127.5
-
-    prediction = model.predict(np.array([img]))
-
-    confidence = prediction[0][0]
-    conf_map = confidence[:,:,1]
-    conf_map = tf.sigmoid(conf_map).numpy()
-    conf_map[conf_map >= threshold] = 255
-    conf_map[conf_map < threshold] = 0
-    conf_map = conf_map.astype(np.uint8)
-
-    
-    output_file = f'{output_dir}/{out_file}.png'
-    plt.imshow(conf_map)
-    plt.title(f'GIF #{out_file}')
-    plt.savefig(output_file)
-
-def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, validation_steps=100, epochs=100):
+def train(model, dataset, val_dataset, weights_file, n_classes=10, steps_per_epoch=1000, validation_steps=100, epochs=100, make_conf_map=False):
     if(os.path.exists(weights_file)):
         print('Checkpoint exists, loading to model ... ')
         model.load_weights(weights_file)
@@ -251,7 +174,7 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
             for j in range(steps_per_epoch):
                 batch = next(iter(dataset))
 
-                cls_loss, bbox_loss, acc = train_step(model, batch)
+                cls_loss, bbox_loss, acc = train_step(model, batch, n_classes=n_classes)
                 cls_loss = cls_loss.numpy()
                 bbox_loss = bbox_loss.numpy()
                 acc = acc.numpy()
@@ -260,7 +183,7 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
                 box_losses.append(bbox_loss)
                 accuracies.append(acc)
 
-                if((j+1) % 100 == 0):
+                if((j+1) % 100 == 0 and make_conf_map):
                     num_gif_files += 1
                     make_pnet_confidence_map(pnet, 'test/test.jpg', num_gif_files)
 
@@ -322,5 +245,5 @@ def train(model, dataset, val_dataset, weights_file, steps_per_epoch=1000, valid
         writer.flush()
 
 
-train(pnet, train_dataset, val_dataset, pnet_weights, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps, epochs=epochs)
+train(pnet, train_dataset, val_dataset, pnet_weights, n_classes=n_classes, steps_per_epoch=steps_per_epoch, validation_steps=validation_steps, epochs=epochs, make_conf_map=True)
 print('[INFO] Training halted, plotting training history ... ')
