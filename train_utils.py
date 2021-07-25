@@ -75,7 +75,7 @@ def train_step(model, batch, n_classes=10):
     return cls_loss, bbx_loss, acc
 
 @tf.function
-def validation_step(model, batch):
+def validation_step(model, batch, n_classes=10):
     img, (bbox, prob) = batch
     bbox = tf.expand_dims(bbox, axis=1)
     bbox = tf.expand_dims(bbox, axis=1)
@@ -89,4 +89,93 @@ def validation_step(model, batch):
     acc = accuracy(tf.math.argmax(prob, axis=3), tf.math.argmax(pr_prob, axis=3))
 
     return cls_loss, bbx_loss, acc
+
+def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10, steps_per_epoch=1000, validation_steps=100, epochs=100, make_conf_map=False):
+    if(os.path.exists(weights_file)):
+        print('Checkpoint exists, loading to model ... ')
+        model.load_weights(weights_file)
+
+    writer = SummaryWriter(log_dir=logdir)
+    num_gif_files = 0
+    summary = {'train_bbox_loss' : 0, 'train_cls_loss' : 0, 'train_acc' : 0,
+            'val_bbox_loss': 0, 'val_cls_loss' : 0, 'val_acc' : 0}
+    for i in range(epochs):
+        print(f'Epoch {i+1}/{epochs}')
+        with tqdm.tqdm(total=steps_per_epoch) as pbar:
+            cls_losses = []
+            box_losses = []
+            accuracies = []
+            for j in range(steps_per_epoch):
+                batch = next(iter(dataset))
+
+                cls_loss, bbox_loss, acc = train_step(model, batch, n_classes=n_classes)
+                cls_loss = cls_loss.numpy()
+                bbox_loss = bbox_loss.numpy()
+                acc = acc.numpy()
+
+                cls_losses.append(cls_loss)
+                box_losses.append(bbox_loss)
+                accuracies.append(acc)
+
+                if((j+1) % 100 == 0 and make_conf_map):
+                    num_gif_files += 1
+                    make_pnet_confidence_map(model, 'test/test.jpg', num_gif_files)
+
+                pbar.set_postfix({
+                    'cls_loss': f'{np.array(cls_losses).mean():.4f}',
+                    'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
+                    'accuracy' : f'{acc:.4f}'
+                })
+                pbar.update(1)
+
+            summary['train_bbox_loss'] = np.array(box_losses).mean()
+            summary['train_cls_loss'] = np.array(cls_losses).mean()
+            summary['train_acc'] = np.array(accuracies).mean()
+
+        print('Saving model weights ... ')
+        model.save_weights(weights_file)
+        print('Validating ... ')
+        with tqdm.tqdm(total=validation_steps // 5, colour='green') as pbar:
+            cls_losses = []
+            box_losses = []
+            accuracies = []
+
+            for j in range(validation_steps // 5):
+                batch = next(iter(val_dataset))
+                cls_loss, bbox_loss, acc = validation_step(model, batch, n_classes=n_classes)
+                cls_losses.append(cls_loss)
+                box_losses.append(bbox_loss)
+                accuracies.append(acc)
+
+                pbar.set_postfix({
+                    'cls_loss' : f'{np.array(cls_losses).mean():.4f}',
+                    'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
+                    'accuracy' : f'{acc:.2f}'
+                })
+                pbar.update(1)
+
+            summary['val_bbox_loss'] = np.array(box_losses).mean()
+            summary['val_cls_loss'] = np.array(cls_losses).mean()
+            summary['val_acc'] = np.array(accuracies).mean()
+       
+        # Log bounding box losses to tensorboard log dir
+        writer.add_scalars('bounding_box_loss', {
+            'train' : summary['train_bbox_loss'],
+            'val' : summary['val_bbox_loss']
+        }, i)
+
+        # Log classification losses to tensorboard log dir
+        writer.add_scalars('classification_loss', {
+            'train' : summary['train_cls_loss'],
+            'val' : summary['val_cls_loss']
+        }, i)
+
+        # Log accuracies to tensorboard log dir
+        writer.add_scalars('accuracy', {
+            'train' : summary['train_acc'],
+            'val' : summary['val_acc']
+        }, i)
+
+        writer.flush()
+
 
