@@ -37,12 +37,13 @@ weights_dir = 'road_signs_w_dataloadr_l2norm'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 pnet_configs = f'weights/{weights_dir}/pnet.json'
-input_dim = 12 # 48
-epochs = 100 # 500
-batch_size = 16
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
 test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
+
+input_dim = 12 # 48
+epochs = 100 # 500
+batch_size = 16
 
 if(not os.path.exists(f'weights/{weights_dir}')):
     print('[INFO] Created weight directory ...')
