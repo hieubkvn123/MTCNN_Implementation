@@ -71,7 +71,7 @@ configs = {
     'n_classes' : n_classes
 }
 onet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
-                        n_classes=configs['n_classes'])
+                        n_classes=configs['n_classes'], l2_norm=True)
 print(f'[INFO] Storing O-Net configuration to {onet_configs}')
 with open(onet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)

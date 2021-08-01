@@ -31,8 +31,6 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
 ### Some constants ###
-# weights_dir = 'road_signs_1'
-# weights_dir = 'road_signs_w_dataloader_1'
 weights_dir = 'road_signs_w_dataloadr_l2norm'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'

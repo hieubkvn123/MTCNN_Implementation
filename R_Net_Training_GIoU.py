@@ -75,7 +75,7 @@ configs = {
     'n_classes' : n_classes
 }
 rnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
-                        n_classes=configs['n_classes'])
+                        n_classes=configs['n_classes'], l2_norm=True)
 print(f'[INFO] Storing R-Net configuration to {rnet_configs}')
 with open(rnet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)
