@@ -39,7 +39,7 @@ def make_pnet_confidence_map(model, test_img_file, out_file, output_dir='pnet_co
     prediction = model.predict(np.array([img]))
 
     confidence = prediction[0][0]
-    conf_map = confidence[:,:,1]
+    conf_map = 1 - confidence[:,:,0]
     conf_map = tf.sigmoid(conf_map).numpy()
     conf_map[conf_map >= threshold] = 255
     conf_map[conf_map < threshold] = 0

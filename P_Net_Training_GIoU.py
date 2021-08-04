@@ -42,7 +42,7 @@ pnet_configs = f'weights/{weights_dir}/pnet.json'
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/train"
 val_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/val"
 
-input_dim = 12 # 48
+input_dim = 12*4 # 48
 epochs = 100 # 500
 batch_size = 16
 

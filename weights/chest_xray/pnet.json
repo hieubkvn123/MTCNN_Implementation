@@ -1,6 +1,6 @@
 {
     "batch_norm": true,
     "dropout": true,
-    "input_shape": 12,
+    "input_shape": 48,
     "n_classes": 15
 }
