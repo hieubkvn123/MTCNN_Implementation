@@ -36,8 +36,8 @@ weights_dir = 'chest_xray'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 pnet_configs = f'weights/{weights_dir}/pnet.json'
-# train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
-# val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
+#train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
+#val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
 
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/train"
 val_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/val"
@@ -56,12 +56,12 @@ if(os.path.exists(pnet_tensorboard_logdir)):
     
 ### Loading dataset ###
 ### Creating the train loader ###
-train_loader = DataLoader(train_dir, format_='darknet',
+train_loader = DataLoader(train_dir, format_='darknet', preprocess='standard',
                     color_space='rgb', img_size=input_dim, batch_size=16,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
-val_loader = DataLoader(val_dir, format_='darknet',
+val_loader = DataLoader(val_dir, format_='darknet', preprocess='standard',
                     color_space='rgb', img_size=input_dim, batch_size=16,
                    crop_to_bounding_box=False)
 
@@ -71,6 +71,7 @@ steps_per_epoch = train_loader.dataset_len
 validation_steps = val_loader.dataset_len
 
 n_classes = train_loader.n_classes
+print(n_classes)
 configs = {
     'input_shape' : input_dim,
     'batch_norm' : True,
