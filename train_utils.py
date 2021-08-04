@@ -119,7 +119,7 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10
 
                 if((j+1) % 100 == 0 and make_conf_map):
                     num_gif_files += 1
-                    make_pnet_confidence_map(model, 'test/test.jpg', num_gif_files)
+                    make_pnet_confidence_map(model, 'test/test.png', num_gif_files)
 
                 pbar.set_postfix({
                     'cls_loss': f'{np.array(cls_losses).mean():.4f}',

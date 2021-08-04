@@ -36,7 +36,6 @@ onet_tensorboard_logdir = 'onet_logs'
 onet_weights = f'weights/{weights_dir}/onet.weights.hdf5'
 onet_configs = f'weights/{weights_dir}/onet.json'
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/train"
-test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
 
 input_dim = 12 # 48
 epochs = 100 # 500

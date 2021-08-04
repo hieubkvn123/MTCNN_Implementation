@@ -37,7 +37,6 @@ rnet_weights = f'weights/{weights_dir}/rnet.weights.hdf5'
 rnet_configs = f'weights/{weights_dir}/rnet.json'
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
-test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
 
 input_dim = 12 # 48
 epochs = 100 # 500

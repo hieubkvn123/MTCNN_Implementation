@@ -31,13 +31,16 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
 ### Some constants ###
-weights_dir = 'road_signs_w_dataloadr_l2norm'
+# weights_dir = 'road_signs_w_dataloadr_l2norm'
+weights_dir = 'chest_xray'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 pnet_configs = f'weights/{weights_dir}/pnet.json'
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
-val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
-test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
+# train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
+# val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
+
+train_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/train"
+val_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/val"
 
 input_dim = 12 # 48
 epochs = 100 # 500
