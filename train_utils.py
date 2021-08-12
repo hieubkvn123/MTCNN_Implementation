@@ -23,7 +23,7 @@ from tensorflow.keras.regularizers import l2, l1
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
-bce  = BinaryCrossentropy(from_logits=True)
+bce  = BinaryCrossentropy(from_logits=False)
 giou = GIoU(mode='giou', reg_factor=2e-4) # tfa.losses.GIoULoss()
 opt = Adam(lr=0.00001, amsgrad=True)
 accuracy = tf.keras.metrics.Accuracy()
@@ -39,8 +39,8 @@ def make_pnet_confidence_map(model, test_img_file, out_file, output_dir='pnet_co
     prediction = model.predict(np.array([img]))
 
     confidence = prediction[0][0]
-    conf_map = 1 - confidence[:,:,0]
-    conf_map = tf.sigmoid(conf_map).numpy()
+    conf_map = confidence[:,:,0]
+    conf_map = 1 - tf.sigmoid(conf_map).numpy()
     conf_map[conf_map >= threshold] = 255
     conf_map[conf_map < threshold] = 0
     conf_map = conf_map.astype(np.uint8)

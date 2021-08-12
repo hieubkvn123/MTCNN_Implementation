@@ -73,7 +73,7 @@ def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, l2_norm=F
         p_layer = Lambda(lambda x : K.l2_normalize(x, axis=3))(p_layer)
 
     p_layer_out1 = Conv2D(n_classes, kernel_size=(1, 1), strides=(2, 2), kernel_regularizer=l1(2e-4), name='prob_logits')(p_layer)
-    # p_layer_out1 = Softmax(axis=3, name='probability')(p_layer_out1)
+    p_layer_out1 = Softmax(axis=3, name='probability')(p_layer_out1)
     p_layer_out2 = Conv2D(4, kernel_size=(1, 1), strides=(2, 2), activation='sigmoid', name='bbox_regression')(p_layer)
 
     p_net = Model(inputs, [p_layer_out1, p_layer_out2], name='P-Net')

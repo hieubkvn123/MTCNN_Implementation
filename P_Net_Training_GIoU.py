@@ -32,18 +32,18 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 
 ### Some constants ###
 # weights_dir = 'road_signs_w_dataloadr_l2norm'
-weights_dir = 'chest_xray'
+weights_dir = 'chest_xray_hist_eq'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 pnet_configs = f'weights/{weights_dir}/pnet.json'
 #train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 #val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
 
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/train"
-val_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_Cropped/images/val"
+train_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_hist_eq/images/train"
+val_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_hist_eq/images/val"
 
 input_dim = 12*4 # 48
-epochs = 100 # 500
+epochs = 1000 # 500
 batch_size = 16
 
 if(not os.path.exists(f'weights/{weights_dir}')):
@@ -57,12 +57,12 @@ if(os.path.exists(pnet_tensorboard_logdir)):
 ### Loading dataset ###
 ### Creating the train loader ###
 train_loader = DataLoader(train_dir, format_='darknet', preprocess='standard',
-                    color_space='rgb', img_size=input_dim, batch_size=16,
+                    color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
 val_loader = DataLoader(val_dir, format_='darknet', preprocess='standard',
-                    color_space='rgb', img_size=input_dim, batch_size=16,
+                    color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 
 train_dataset = train_loader.get_train_dataset()
@@ -71,7 +71,6 @@ steps_per_epoch = train_loader.dataset_len
 validation_steps = val_loader.dataset_len
 
 n_classes = train_loader.n_classes
-print(n_classes)
 configs = {
     'input_shape' : input_dim,
     'batch_norm' : True,
@@ -95,5 +94,5 @@ train(pnet, train_dataset, val_dataset, pnet_weights,
         steps_per_epoch=steps_per_epoch, 
         validation_steps=validation_steps, 
         epochs=epochs, 
-        make_conf_map=True)
+        make_conf_map=False)
 print('[INFO] Training halted, plotting training history ... ')
