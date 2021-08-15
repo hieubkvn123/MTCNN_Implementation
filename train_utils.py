@@ -90,7 +90,14 @@ def validation_step(model, batch, n_classes=10):
 
     return cls_loss, bbx_loss, acc
 
-def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10, steps_per_epoch=1000, validation_steps=100, epochs=100, make_conf_map=False):
+def _overfitting(losses, patience):
+    head = losses[-patience:]
+
+    # Check if sorted head is equal to unsorted head
+    return sorted(head) == head
+
+def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10, steps_per_epoch=1000, validation_steps=100, 
+        epochs=100, patience=15, make_conf_map=False, early_stopping=False):
     if(os.path.exists(weights_file)):
         print('Checkpoint exists, loading to model ... ')
         model.load_weights(weights_file)
@@ -99,6 +106,15 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10
     num_gif_files = 0
     summary = {'train_bbox_loss' : 0, 'train_cls_loss' : 0, 'train_acc' : 0,
             'val_bbox_loss': 0, 'val_cls_loss' : 0, 'val_acc' : 0}
+    history = {
+        'train' : {
+            'cls' : [], 'bbox' : []
+        },
+        'val' : {
+            'cls' : [], 'box' : []
+        }
+    }
+
     for i in range(epochs):
         print(f'Epoch {i+1}/{epochs}')
         with tqdm.tqdm(total=steps_per_epoch) as pbar:
@@ -132,8 +148,6 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10
             summary['train_cls_loss'] = np.array(cls_losses).mean()
             summary['train_acc'] = np.array(accuracies).mean()
 
-        print('Saving model weights ... ')
-        model.save_weights(weights_file)
         print('Validating ... ')
         with tqdm.tqdm(total=validation_steps // 5, colour='green') as pbar:
             cls_losses = []
@@ -178,4 +192,18 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10
 
         writer.flush()
 
+        # Append information into the history log
+        history['train']['cls'].append(summary['train_cls_loss'])
+        history['train']['bbox'].append(summary['train_bbox_loss'])
+        history['val']['cls'].append(summary['val_cls_loss'])
+        history['val']['bbox'].append(summary['val_bbox_loss'])
 
+        # Check if the model is currently overfitting
+        if(_overfitting(history['val']['cls'], patience) or _overfitting(history['val']['bbox'])):
+            # If early stopping is set, break the training loop
+            if(early_stopping):
+                break
+
+        if(not _overfitting(hisory['val']['cls'], 2)):
+            print('Saving model weights to ', weights_file, ' ... ')
+            model.save_weights(weights_file)

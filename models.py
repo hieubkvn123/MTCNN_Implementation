@@ -41,10 +41,49 @@ def conv_block(in_filters, out_filters, kernel_size=3, batch_norm=False):
     block = Model(inputs = inputs, outputs=p_layer)
     return block
 
+def res_block(in_filters, out_filters, kernel_size=3, downsample=False):
+    inputs = Input(shape=(None, None, in_filters))
+    identity = inputs
+
+    conv1 = Conv2D(out_filters, kernel_size=kernel_size, strides=(1,1), padding='same', kernel_regularizer=l1(2e-4))(inputs)
+    bn1   = BatchNormalization()(conv1)
+    relu1 = PReLU(shared_axes=[1, 2])(bn1)
+
+    conv2 = Conv2D(out_filters, kernel_size=kernel_size, strides=(1,1), padding='same', kernel_regularizer=l1(2e-4))(inputs)
+    bn2   = BatchNormalization()(conv2)
+    relu2 = PReLU(shared_axes=[1,2])(bn2)
+
+    if(downsample):
+        identity = Conv2D(out_filters, kernel_size=1, strides=(1,1), padding='same', kernel_regularizer=l1(1e-4))(identity)
+        identity = BatchNormalization()(identity)
+
+    res_out = relu2 + identity
+    res_out = ReLU()(res_out)
+
+    block = Model(inputs=inputs, outputs=res_out)
+    return block
+
+def res_p_layer_block(in_filters, out_filters, n_res_blk=1, kernel_size=3, downsample=False, batch_norm=False):
+    inputs = Input(shape=(None, None, in_filters))
+    res_out = res_block(in_filters, out_filters, kernel_size=kernel_size, downsample=downsample)(inputs)
+    
+    if(n_res_blk > 1):
+        for i in range(n_res_blk-1):
+            res_out = res_block(out_filters, out_filters, kernel_size=kernel_size, downsample=downsample)(res_out)
+
+    p_layer = Conv2D(out_filters, kernel_size=kernel_size, strides=(1, 1), padding="valid", kernel_regularizer=l1(2e-4))(res_out)
+    if(batch_norm) : p_layer = BatchNormalization()(p_layer)
+    p_layer = PReLU(shared_axes=[1, 2])(p_layer)
+
+    p_layer = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="same")(p_layer)
+    block = Model(inputs=inputs, outputs=p_layer)
+
+    return block
+
 def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, l2_norm=False, n_classes=2, activation='relu'):
     if(input_shape is not None):
         if(input_shape not in [12, 24, 48, 112, 224]):
-            raise Exception('Input shape must be in 12, 24, 48')
+            raise Exception('Input shape must be in 12, 24, 48, 112 or 224')
 
     inputs = Input(shape=(None, None, 3))
     p_layer = conv_block(3, 10, kernel_size=3, batch_norm=batch_norm)(inputs)

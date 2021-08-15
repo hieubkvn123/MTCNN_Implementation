@@ -79,6 +79,7 @@ def memory_data_batch_dataset(memory_data,
 def disk_image_batch_dataset(directory,
                              format_,
                              batch_size,
+                             annot_format='rect',
                              img_dir=None,
                              annot_dir=None,
                              crop_to_bounding_box=False,
@@ -97,15 +98,16 @@ def disk_image_batch_dataset(directory,
     ----------
     img_paths : 1d-tensor/ndarray/list of str
     labels : nested structure of tensors/ndarrays/lists
-
+    annot_format : 'rect' or 'corners'. 'rect' will be [x, y, w, h], 'corners' will
+                    be [x1, y1, x2, y2]
     """
     if(img_dir is None): img_dir = 'images'
     if(annot_dir is None): annot_dir = 'annotations'
 
     if(format_ == 'pascal_voc'):
-        img_paths, bboxes, labels = parse_pascal_voc(directory, img_dir=img_dir, annot_dir=annot_dir)
+        img_paths, bboxes, labels = parse_pascal_voc(directory, img_dir=img_dir, annot_format=annot_format, annot_dir=annot_dir)
     elif(format_ == 'darknet'):
-        img_paths, bboxes, labels = parse_darknet(directory)
+        img_paths, bboxes, labels = parse_darknet(directory, annot_format=annot_format)
 
     if(len(img_paths) < 1):
         raise Exception(f"There is no image in {os.path.join(directory, img_dir)}")

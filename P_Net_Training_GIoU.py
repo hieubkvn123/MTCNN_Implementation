@@ -32,17 +32,17 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 
 ### Some constants ###
 # weights_dir = 'road_signs_w_dataloadr_l2norm'
-weights_dir = 'chest_xray_hist_eq'
+weights_dir = 'dota_1'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 pnet_configs = f'weights/{weights_dir}/pnet.json'
 #train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 #val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
 
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_hist_eq/images/train"
-val_dir = "/home/minhhieu/Desktop/Hieu/datasets/ChestXRay_hist_eq/images/val"
+train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
+val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
 
-input_dim = 12*4 # 48
+input_dim = 12*2 # 48
 epochs = 1000 # 500
 batch_size = 16
 
@@ -94,5 +94,7 @@ train(pnet, train_dataset, val_dataset, pnet_weights,
         steps_per_epoch=steps_per_epoch, 
         validation_steps=validation_steps, 
         epochs=epochs, 
-        make_conf_map=False)
+        make_conf_map=False,
+        early_stopping=True,
+        patience=10)
 print('[INFO] Training halted, plotting training history ... ')
