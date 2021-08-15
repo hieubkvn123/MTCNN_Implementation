@@ -31,12 +31,16 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
 ### Some constants ###
-weights_dir = 'road_signs_w_dataloader_new'
+weights_dir = 'road_signs_w_dataloader_l2norm'
+# weights_dir = 'dota_1'
 rnet_tensorboard_logdir = 'rnet_logs'
 rnet_weights = f'weights/{weights_dir}/rnet.weights.hdf5'
 rnet_configs = f'weights/{weights_dir}/rnet.json'
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
+
+#train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
+#val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
 
 input_dim = 12 # 48
 epochs = 100 # 500
@@ -52,12 +56,12 @@ if(os.path.exists(rnet_tensorboard_logdir)):
 
 ### Loading dataset ###
 ### Creating the train loader ###
-train_loader = DataLoader(train_dir, format_='darknet',
+train_loader = DataLoader(train_dir, format_='darknet', annot_format='corners',
                     color_space='rgb', img_size=input_dim*2, batch_size=16,
                    crop_to_bounding_box=False)
 
 ### Creating the val loader ###
-val_loader = DataLoader(val_dir, format_='darknet',
+val_loader = DataLoader(val_dir, format_='darknet', annot_format='corners',
                     color_space='rgb', img_size=input_dim*2, batch_size=16,
                    crop_to_bounding_box=False)
 train_dataset = train_loader.get_train_dataset()

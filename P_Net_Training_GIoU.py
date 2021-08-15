@@ -31,18 +31,18 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
 ### Some constants ###
-# weights_dir = 'road_signs_w_dataloadr_l2norm'
-weights_dir = 'dota_1'
+weights_dir = 'road_signs_w_dataloader_l2norm'
+# weights_dir = 'dota_1'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 pnet_configs = f'weights/{weights_dir}/pnet.json'
-#train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
-#val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
+train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
+val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
 
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
-val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
+#train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
+#val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
 
-input_dim = 12*2 # 48
+input_dim = 12 # 48
 epochs = 1000 # 500
 batch_size = 16
 
@@ -56,12 +56,12 @@ if(os.path.exists(pnet_tensorboard_logdir)):
     
 ### Loading dataset ###
 ### Creating the train loader ###
-train_loader = DataLoader(train_dir, format_='darknet', preprocess='standard',
+train_loader = DataLoader(train_dir, format_='darknet', preprocess='standard', annot_format='corners',
                     color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
-val_loader = DataLoader(val_dir, format_='darknet', preprocess='standard',
+val_loader = DataLoader(val_dir, format_='darknet', preprocess='standard', annot_format='corners',
                     color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 

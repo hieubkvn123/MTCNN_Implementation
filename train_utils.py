@@ -24,7 +24,7 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
 bce  = BinaryCrossentropy(from_logits=False)
-giou = GIoU(mode='giou', reg_factor=2e-4) # tfa.losses.GIoULoss()
+giou = tfa.losses.GIoULoss(mode='giou') # GIoU(mode='giou', reg_factor=2e-4)
 opt = Adam(lr=0.00001, amsgrad=True)
 accuracy = tf.keras.metrics.Accuracy()
 
@@ -63,7 +63,6 @@ def train_step(model, batch, n_classes=10):
         pr_prob, pr_bbox = model(img, training=True)
         acc = accuracy(tf.math.argmax(prob, axis=3), tf.math.argmax(pr_prob, axis=3))
 
-        # print(pr_prob.shape, prob.shape)
         cls_loss = bce(prob, pr_prob)
         bbx_loss = giou(bbox, pr_bbox)
 
