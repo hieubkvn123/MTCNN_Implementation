@@ -221,7 +221,7 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', box_reg='gio
 
         # Check if the model is currently overfitting
         if(len(history['val']['cls']) >= patience): # If patience if p, at least p epochs must be trained to consider early stopping
-            if(_overfitting(history['val']['cls'], patience) or _overfitting(history['val']['bbox'])):
+            if(_overfitting(history['val']['cls'], patience) or _overfitting(history['val']['bbox'], patience)):
                 # If early stopping is set, break the training loop
                 if(early_stopping):
                     break
