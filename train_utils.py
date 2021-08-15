@@ -225,7 +225,11 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', box_reg='gio
                 # If early stopping is set, break the training loop
                 if(early_stopping):
                     break
-
-        if(not _overfitting(hisory['val']['cls'], 2)):
+    
+        if(len(history['val']['cls']) >= 2):
+            if(not _overfitting(history['val']['cls'], 2)):
+                print('Saving model weights to ', weights_file, ' ... ')
+                model.save_weights(weights_file)
+        else:
             print('Saving model weights to ', weights_file, ' ... ')
             model.save_weights(weights_file)
