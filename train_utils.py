@@ -24,6 +24,7 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
 bce  = BinaryCrossentropy(from_logits=False)
+mse  = tf.keras.losses.MeanSquaredError()
 giou = tfa.losses.GIoULoss(mode='giou') # GIoU(mode='giou', reg_factor=2e-4)
 opt = Adam(lr=0.00001, amsgrad=True)
 accuracy = tf.keras.metrics.Accuracy()
@@ -52,7 +53,7 @@ def make_pnet_confidence_map(model, test_img_file, out_file, output_dir='pnet_co
     plt.savefig(output_file)
 
 @tf.function
-def train_step(model, batch, n_classes=10):
+def train_step(model, batch, box_reg='iou', n_classes=10):
     with tf.GradientTape() as tape:
         img, (bbox, prob) = batch
         bbox = tf.expand_dims(bbox, axis=1)
@@ -64,7 +65,11 @@ def train_step(model, batch, n_classes=10):
         acc = accuracy(tf.math.argmax(prob, axis=3), tf.math.argmax(pr_prob, axis=3))
 
         cls_loss = bce(prob, pr_prob)
-        bbx_loss = giou(bbox, pr_bbox)
+
+        if(box_reg == 'giou'):
+            bbx_loss = giou(bbox, pr_bbox)
+        else:
+            bbx_loss = mse(bbox, pre_bbox)
 
         loss = cls_loss + bbx_loss
 
@@ -95,8 +100,25 @@ def _overfitting(losses, patience):
     # Check if sorted head is equal to unsorted head
     return sorted(head) == head
 
-def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10, steps_per_epoch=1000, validation_steps=100, 
+def train(model, dataset, val_dataset, weights_file, logdir='logs', box_reg='giou', 
+        n_classes=10, steps_per_epoch=1000, validation_steps=100, 
         epochs=100, patience=15, make_conf_map=False, early_stopping=False):
+    '''
+        Parameters:
+        @model : The tensorflow-keras model to be trained
+        @dataset : The training dataset (DataLoader)
+        @val_dataset : The validation dataset (DataLoader)
+        @weights_file : The destination file where model weights are stored
+        @logdir : The tensorboard logging directory
+        @box_reg : The bounding box regression method. 'giou' for GIoU and 'mse' for mean squared error
+        @n_classes : The number of object classes
+        @steps_per_epoch : Number of batches in the training dataset
+        @validation_steps : Number of batches in the validation dataset
+        @epochs : Number of training iterations
+        @patience : Applicable for early stopping.
+        @make_conf_map : Log confidence map in the classification task or not.
+        @early_stopping : Whether to apply early stopping or not
+    '''
     if(os.path.exists(weights_file)):
         print('Checkpoint exists, loading to model ... ')
         model.load_weights(weights_file)
@@ -123,7 +145,7 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10
             for j in range(steps_per_epoch):
                 batch = next(iter(dataset))
 
-                cls_loss, bbox_loss, acc = train_step(model, batch, n_classes=n_classes)
+                cls_loss, bbox_loss, acc = train_step(model, batch, box_reg=box_reg, n_classes=n_classes)
                 cls_loss = cls_loss.numpy()
                 bbox_loss = bbox_loss.numpy()
                 acc = acc.numpy()
@@ -198,10 +220,11 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10
         history['val']['bbox'].append(summary['val_bbox_loss'])
 
         # Check if the model is currently overfitting
-        if(_overfitting(history['val']['cls'], patience) or _overfitting(history['val']['bbox'])):
-            # If early stopping is set, break the training loop
-            if(early_stopping):
-                break
+        if(len(history['val']['cls']) >= patience): # If patience if p, at least p epochs must be trained to consider early stopping
+            if(_overfitting(history['val']['cls'], patience) or _overfitting(history['val']['bbox'])):
+                # If early stopping is set, break the training loop
+                if(early_stopping):
+                    break
 
         if(not _overfitting(hisory['val']['cls'], 2)):
             print('Saving model weights to ', weights_file, ' ... ')
