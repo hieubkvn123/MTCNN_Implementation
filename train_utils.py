@@ -110,7 +110,7 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', n_classes=10
             'cls' : [], 'bbox' : []
         },
         'val' : {
-            'cls' : [], 'box' : []
+            'cls' : [], 'bbox' : []
         }
     }
 
