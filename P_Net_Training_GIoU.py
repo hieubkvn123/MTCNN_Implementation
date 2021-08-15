@@ -99,5 +99,5 @@ train(pnet, train_dataset, val_dataset, pnet_weights,
         epochs=epochs, 
         make_conf_map=False,
         early_stopping=True,
-        patience=10)
+        patience=2)
 print('[INFO] Training halted, plotting training history ... ')
