@@ -19,7 +19,7 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from custom_giou import GIoU
 from train_utils import train
-from models import build_pnet_model
+from models import build_pnet_model, build_residual_pnet_model
 from torch.utils.tensorboard import SummaryWriter
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
@@ -83,7 +83,10 @@ with open(pnet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)
 
 ### Experimenting with l2 normalization on the final logit layer ###
-pnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
+#pnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
+#                        n_classes=configs['n_classes'], l2_norm=True)
+
+pnet = build_residual_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
                         n_classes=configs['n_classes'], l2_norm=True)
 print(pnet.summary())
 

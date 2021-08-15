@@ -92,11 +92,9 @@ def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, l2_norm=F
         if(input_shape >= 24):
             p_layer = conv_block(10, 10, kernel_size=3, batch_norm=batch_norm)(p_layer)
 
-    if(input_shape is not None):
         if(input_shape >= 48):
             p_layer = conv_block(10, 10, kernel_size=3, batch_norm=batch_norm)(p_layer)
 
-    if(input_shape is not None):
         if(input_shape >= 112):
             p_layer = conv_block(10, 10, kernel_size=3, batch_norm=batch_norm)(p_layer)
 
@@ -107,6 +105,42 @@ def build_pnet_model(input_shape=None, batch_norm=True, dropout=False, l2_norm=F
     p_layer = PReLU(shared_axes=[1, 2])(p_layer)
     if(dropout) : p_layer = Dropout(0.5)(p_layer)
 
+    if(l2_norm):
+        p_layer = Lambda(lambda x : K.l2_normalize(x, axis=3))(p_layer)
+
+    p_layer_out1 = Conv2D(n_classes, kernel_size=(1, 1), strides=(2, 2), kernel_regularizer=l1(2e-4), name='prob_logits')(p_layer)
+    p_layer_out1 = Softmax(axis=3, name='probability')(p_layer_out1)
+    p_layer_out2 = Conv2D(4, kernel_size=(1, 1), strides=(2, 2), activation='sigmoid', name='bbox_regression')(p_layer)
+
+    p_net = Model(inputs, [p_layer_out1, p_layer_out2], name='P-Net')
+
+    return p_net
+
+# A variant of P-Net that has residual block from ResNet
+def build_residual_pnet_model(input_shape=None, batch_norm=True, dropout=False, l2_norm=False, n_classes=2, activation='relu'):
+    if(input_shape is not None):
+        if(input_shape not in [12, 24, 48, 112, 224]):
+            raise Exception('Input shape must be in 12, 24, 48, 112 or 224')
+
+    inputs = Input(shape=(None, None, 3))
+    p_layer = res_p_layer_block(3, 10, kernel_size=3, batch_norm=batch_norm, downsample=True)(inputs)
+
+    if(input_shape is not None):
+        if(input_shape >= 24):
+            p_layer = res_p_layer_block(10, 10, kernel_size=3, batch_norm=batch_norm, downsample=True)(p_layer)
+
+        if(input_shape >= 48):
+            p_layer = res_p_layer_block(10, 10, kernel_size=3, batch_norm=batch_norm, downsample=True)(p_layer)
+
+        if(input_shape >= 112):
+            p_layer = res_p_layer_block(10, 10, kernel_size=3, batch_norm=batch_norm, downsample=True)(p_layer)
+
+    p_layer = Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding="valid", kernel_regularizer=l1(2e-4))(p_layer)
+    p_layer = PReLU(shared_axes=[1, 2])(p_layer)
+
+    p_layer = Conv2D(32, kernel_size=(3, 3), strides=(1, 1), padding="valid", kernel_regularizer=l1(2e-4))(p_layer)
+    p_layer = PReLU(shared_axes=[1, 2])(p_layer)
+    if(dropout) : p_layer = Dropout(0.5)(p_layer)
 
     if(l2_norm):
         p_layer = Lambda(lambda x : K.l2_normalize(x, axis=3))(p_layer)
