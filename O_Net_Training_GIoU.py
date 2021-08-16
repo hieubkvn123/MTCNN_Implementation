@@ -31,12 +31,16 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 
 ### Some constants ###
 # weights_dir = 'road_signs_1'
-weights_dir = 'road_signs_w_dataloader_new'
+weights_dir = 'road_signs_w_dataloader_l2norm'
+# weights_dir = 'dota_1'
 onet_tensorboard_logdir = 'onet_logs'
 onet_weights = f'weights/{weights_dir}/onet.weights.hdf5'
 onet_configs = f'weights/{weights_dir}/onet.json'
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/train"
-test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
+train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
+val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
+
+#train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
+#val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
 
 input_dim = 12 # 48
 epochs = 100 # 500
@@ -52,12 +56,12 @@ if(os.path.exists(onet_tensorboard_logdir)):
 
 ### Loading dataset ###
 ### Creating the train loader ###
-train_loader = DataLoader(train_dir, format_='darknet',
+train_loader = DataLoader(train_dir, format_='darknet', annot_format='corners',
                     color_space='rgb', img_size=input_dim*4, batch_size=64,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
-test_loader = DataLoader(test_dir, format_='darknet',
+test_loader = DataLoader(test_dir, format_='darknet', annot_format='corners',
                     color_space='rgb', img_size=input_dim*4, batch_size=64,
                    crop_to_bounding_box=False)
 train_dataset = train_loader.get_train_dataset()
@@ -71,7 +75,7 @@ configs = {
     'n_classes' : n_classes
 }
 onet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
-                        n_classes=configs['n_classes'])
+                        n_classes=configs['n_classes'], l2_norm=True)
 print(f'[INFO] Storing O-Net configuration to {onet_configs}')
 with open(onet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)

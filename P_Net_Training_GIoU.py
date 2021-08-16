@@ -19,7 +19,7 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from custom_giou import GIoU
 from train_utils import train
-from models import build_pnet_model
+from models import build_pnet_model, build_residual_pnet_model
 from torch.utils.tensorboard import SummaryWriter
 from tensorflow.keras.layers import *
 from tensorflow.keras.models import Model
@@ -31,18 +31,19 @@ from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStoppi
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
 ### Some constants ###
-# weights_dir = 'road_signs_1'
-# weights_dir = 'road_signs_w_dataloader_1'
-weights_dir = 'road_signs_w_dataloadr_l2norm'
+weights_dir = 'road_signs_w_dataloader_l2norm'
+# weights_dir = 'dota_1'
 pnet_tensorboard_logdir = 'pnet_logs'
 pnet_weights = f'weights/{weights_dir}/pnet.weights.hdf5'
 pnet_configs = f'weights/{weights_dir}/pnet.json'
 train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
-test_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/test"
+
+#train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
+#val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
 
 input_dim = 12 # 48
-epochs = 100 # 500
+epochs = 1000 # 500
 batch_size = 16
 
 if(not os.path.exists(f'weights/{weights_dir}')):
@@ -55,13 +56,13 @@ if(os.path.exists(pnet_tensorboard_logdir)):
     
 ### Loading dataset ###
 ### Creating the train loader ###
-train_loader = DataLoader(train_dir, format_='darknet',
-                    color_space='rgb', img_size=input_dim, batch_size=16,
+train_loader = DataLoader(train_dir, format_='darknet', preprocess='standard', annot_format='corners',
+                    color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
-val_loader = DataLoader(val_dir, format_='darknet',
-                    color_space='rgb', img_size=input_dim, batch_size=16,
+val_loader = DataLoader(val_dir, format_='darknet', preprocess='standard', annot_format='corners',
+                    color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 
 train_dataset = train_loader.get_train_dataset()
@@ -82,7 +83,10 @@ with open(pnet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)
 
 ### Experimenting with l2 normalization on the final logit layer ###
-pnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
+#pnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
+#                        n_classes=configs['n_classes'], l2_norm=True)
+
+pnet = build_residual_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
                         n_classes=configs['n_classes'], l2_norm=True)
 print(pnet.summary())
 
@@ -93,5 +97,7 @@ train(pnet, train_dataset, val_dataset, pnet_weights,
         steps_per_epoch=steps_per_epoch, 
         validation_steps=validation_steps, 
         epochs=epochs, 
-        make_conf_map=True)
+        make_conf_map=False,
+        early_stopping=True,
+        patience=2)
 print('[INFO] Training halted, plotting training history ... ')

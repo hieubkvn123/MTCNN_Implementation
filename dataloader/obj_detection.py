@@ -19,6 +19,7 @@ class DataLoader:
 			train_val_ratio=0.333,
 			preprocess="default",
 			color_space="rgb",
+                        annot_format="rect",
 			random_noise=False,
 			drop_remainder=True,
 			shuffle=True,
@@ -26,6 +27,7 @@ class DataLoader:
 		rgb_to_rgb = lambda img : img
 		extensions = ['*.png', "*.jpg", "*.jpeg"]
 		valid_preprocess = ["default", "standard", "minmax"]
+		valid_annot_format = ["rect", "corners"]
 		valid_colors = {
 			"rgb" : rgb_to_rgb,
 			"hsv" : tf.image.rgb_to_hsv,
@@ -43,7 +45,9 @@ class DataLoader:
 			raise Exception(f'Invalid preprocessing method, methods include {valid_preprocess}')
 		if(color_space not in valid_colors):
 			raise Exception(f'Invalid color space, valid color spaces are {list(valid_colors.keys())}')
-		
+		if(annot_format not in valid_annot_format):
+			raise Exception(f'In valid annotation format, valid annotation formats are {valid_annot_format}')            
+
 		### Start making the dataset ###
 		self.img_size = img_size
 		self.format_ = format_
@@ -61,6 +65,7 @@ class DataLoader:
 										  self.format_,
 										  self.batch_size,
 										  img_dir=img_dir,
+										  annot_format=annot_format,
 										  annot_dir=annot_dir,
 										  crop_to_bounding_box=crop_to_bounding_box,
 										  drop_remainder=drop_remainder,
@@ -72,6 +77,7 @@ class DataLoader:
 										  self.format_,
 										  self.batch_size,
 										  img_dir=img_dir,
+										  annot_format=annot_format,
 										  annot_dir=annot_dir,
 										  crop_to_bounding_box=crop_to_bounding_box,
 										  drop_remainder=drop_remainder,

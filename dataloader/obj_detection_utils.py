@@ -5,7 +5,8 @@ import xmltodict
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
-def parse_pascal_voc(directory, img_dir='images', annot_dir='annotations'):
+def parse_pascal_voc(directory, img_dir='images', annot_dir='annotations', annot_format='rect'):
+    assert annot_format in ['rect', 'corners']
     annot_dir = os.path.join(directory, annot_dir)
     img_dir = os.path.join(directory, img_dir)
     xml_files = glob.glob(os.path.join(annot_dir, '*.xml'))
@@ -35,7 +36,10 @@ def parse_pascal_voc(directory, img_dir='images', annot_dir='annotations'):
                     class_id = obj['name']
 
                     img_paths.append(os.path.join(img_dir, filename))
-                    bboxes.append([left, top, right-left, bottom-top])
+                    if(annot_format == 'rect'):
+                        bboxes.append([left, top, right-left, bottom-top])
+                    if(annot_format == 'corners'):
+                        bboxes.append([left, top, right, bottom])
                     labels.append(class_id)
 
             elif(isinstance(objects, dict)):
@@ -48,14 +52,22 @@ def parse_pascal_voc(directory, img_dir='images', annot_dir='annotations'):
                 class_id = obj['name']
 
                 img_paths.append(os.path.join(img_dir, filename))
-                bboxes.append([left, top, right-left, bottom-top])
+                if(annot_format == 'rect'):
+                    bboxes.append([left, top, right-left, bottom-top])
+                if(annot_format == 'corners'):
+                    bboxes.append([left, top, right, bottom])
                 labels.append(class_id)
 
 
     labels = LabelEncoder().fit_transform(labels)
     return np.array(img_paths), np.array(bboxes), np.array(labels)
 
-def parse_darknet(directory):
+def parse_darknet(directory, annot_format='rect'):
+    '''
+        @annot_format : Annotation format. Defines in which format the bounding boxes
+        are annotated. 'corners' will be [x1, y1, x2, y2], 'rect' will be [x, y, w, h]
+    '''
+    assert annot_format in ['rect', 'corners']
     img_extensions = ['png', 'jpg', 'jpeg', 'ppm']
     img_files = []
     annot_files = []
@@ -87,7 +99,11 @@ def parse_darknet(directory):
             img_path = f"{annot.split('.')[0]}.{file_ext}"
 
             img_paths.append(img_path)
-            bboxes.append([x, y, w, h])
+            if(annot_format == 'rect'):
+                bboxes.append([x, y, w, h])
+            elif(annot_format == 'corners'):
+                bboxes.append([x, y, x+w, y+h])
+
             labels.append(class_id)
 
     return np.array(img_paths), np.array(bboxes), np.array(labels)
