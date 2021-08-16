@@ -29,16 +29,24 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, CategoricalCrossentropy
 
+### Specify the training directory and validating directory ###
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument('--train-dir', type=str, required=True, help='Path the the Darknet annotated training dataset')
+parser.add_argument('--val-dir', type=str, required=True, help='Path to the Darknet annotated validation dataset')
+args = vars(parser.parse_args())
+
 ### Some constants ###
-# weights_dir = 'road_signs_1'
 weights_dir = 'road_signs_w_dataloader_l2norm'
-# weights_dir = 'dota_1'
 onet_tensorboard_logdir = 'onet_logs'
 onet_weights = f'weights/{weights_dir}/onet.weights.hdf5'
 onet_configs = f'weights/{weights_dir}/onet.json'
-train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
-val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
+train_dir = args['train_dir']
+val_dir = args['val_dir']
 
+#train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
+#val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
 #train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
 #val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
 
