@@ -53,7 +53,7 @@ def make_pnet_confidence_map(model, test_img_file, out_file, output_dir='pnet_co
     plt.savefig(output_file)
 
 @tf.function
-def train_step(model, batch, box_reg='iou', n_classes=10):
+def train_step(model, batch, box_reg='giou', n_classes=10):
     with tf.GradientTape() as tape:
         img, (bbox, prob) = batch
         bbox = tf.expand_dims(bbox, axis=1)
