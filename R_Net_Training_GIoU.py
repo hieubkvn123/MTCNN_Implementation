@@ -34,17 +34,18 @@ from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy, Catego
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
+parser.add_argument('--model-name', type=str, required=True, help='Model name is the directory to store the weights file')
 parser.add_argument('--train-dir', type=str, required=True, help='Path the the Darknet annotated training dataset')
 parser.add_argument('--val-dir', type=str, required=True, help='Path to the Darknet annotated validation dataset')
 args = vars(parser.parse_args())
 
 ### Some constants ###
-weights_dir = 'road_signs_w_dataloader_l2norm'
+weights_dir = args['model_name'] 
+train_dir = args['train_dir']
+val_dir = args['val_dir']
 rnet_tensorboard_logdir = 'rnet_logs'
 rnet_weights = f'weights/{weights_dir}/rnet.weights.hdf5'
 rnet_configs = f'weights/{weights_dir}/rnet.json'
-train_dir = args['train_dir']
-val_dir = args['val_dir']
 
 #train_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/train"
 #val_dir = "/home/minhhieu/Desktop/Hieu/datasets/GTSRB/outputs/obj/val"
