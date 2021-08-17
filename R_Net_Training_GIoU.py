@@ -77,9 +77,6 @@ val_loader = DataLoader(val_dir, format_='darknet', annot_format='corners',
 train_dataset = train_loader.get_train_dataset()
 val_dataset = val_loader.get_train_dataset()
 
-X, (Y1, Y2) = next(iter(train_dataset))
-print(Y2.shape)
-
 n_classes = train_loader.n_classes
 configs = {
     'input_shape' : input_dim*2,
@@ -89,6 +86,7 @@ configs = {
 }
 rnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
                         n_classes=configs['n_classes'], l2_norm=True)
+
 print(f'[INFO] Storing R-Net configuration to {rnet_configs}')
 with open(rnet_configs, 'w') as config_file:
     json.dump(configs, config_file, indent=4, sort_keys=True)
@@ -98,10 +96,6 @@ print(rnet.summary())
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
 validation_steps = val_loader.dataset_len
-bce  = BinaryCrossentropy(from_logits=False) # CategoricalCrossentropy(from_logits=False) 
-giou = GIoU(mode='giou', reg_factor=2e-4) # tfa.losses.GIoULoss()
-opt = Adam(lr=0.00001, amsgrad=True)
-accuracy = tf.keras.metrics.Accuracy()
 
 train(rnet, train_dataset, val_dataset, rnet_weights, 
         logdir=rnet_tensorboard_logdir,

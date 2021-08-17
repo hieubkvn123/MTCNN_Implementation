@@ -66,13 +66,14 @@ if(os.path.exists(onet_tensorboard_logdir)):
 ### Loading dataset ###
 ### Creating the train loader ###
 train_loader = DataLoader(train_dir, format_='darknet', annot_format='corners',
-                    color_space='rgb', img_size=input_dim*4, batch_size=64,
+                    color_space='rgb', img_size=input_dim*4, batch_size=16,
                    crop_to_bounding_box=False)
 
-### Creating the test loader ###
-test_loader = DataLoader(test_dir, format_='darknet', annot_format='corners',
-                    color_space='rgb', img_size=input_dim*4, batch_size=64,
+### Creating the val loader ###
+val_loader = DataLoader(val_dir, format_='darknet', annot_format='corners',
+                    color_space='rgb', img_size=input_dim*4, batch_size=16,
                    crop_to_bounding_box=False)
+
 train_dataset = train_loader.get_train_dataset()
 val_dataset = train_loader.get_val_dataset()
 
@@ -94,10 +95,6 @@ print(onet.summary())
 ### Define training loop and start training ###
 steps_per_epoch = train_loader.dataset_len
 validation_steps = train_loader.val_len
-bce  = CategoricalCrossentropy(from_logits=False) # BinaryCrossentropy(from_logits=False)
-giou = GIoU(mode='giou', reg_factor=2e-4) # tfa.losses.GIoULoss()
-opt = Adam(lr=0.00001, amsgrad=True)
-accuracy = tf.keras.metrics.Accuracy()
 
 train(onet, train_dataset, val_dataset, onet_weights, 
         logdir=onet_tensorboard_logdir,
