@@ -3,3 +3,4 @@ media/*.gif
 __pycache__
 */__pycache__
 data/
+data/*
