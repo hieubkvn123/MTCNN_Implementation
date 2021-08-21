@@ -1,50 +1,4 @@
-import os
-import cv2
-import json
-import numpy as np
-import tensorflow as tf
-
-from tensorflow.keras.layers import *
-from tensorflow.keras.models import Model
-from tensorflow.keras.regularizers import l2
-
-class MTCNN:
-    def __init__(self, weights_dir):
-        self.pnet_weights = os.path.join(weights_dir, 'pnet.weights.hdf5')
-        self.rnet_weights = os.path.join(weights_dir, 'rnet.weights.hdf5')
-        self.onet_weights = os.path.join(weights_dir, 'onet.weights.hdf5')
-
-        self.pnet_configs = json.load(open(os.path.join(weights_dir, 'pnet.json'), 'r'))
-        self.rnet_configs = json.load(open(os.path.join(weights_dir, 'rnet.json'), 'r'))
-        self.onet_configs = json.load(open(os.path.join(weights_dir, 'onet.json'), 'r'))
-
-        ### Construct network architectures ###
-        self.pnet = self._build_pnet_model(input_shape=self.pnet_configs['input_shape'], 
-                                          batch_norm=self.pnet_configs['batch_norm'], 
-                                          dropout=self.pnet_configs['dropout'],
-                                          n_classes=self.pnet_configs['n_classes'])
-
-        self.rnet = self._build_pnet_model(input_shape=self.rnet_configs['input_shape'], 
-                                          batch_norm=self.rnet_configs['batch_norm'], 
-                                          dropout=self.rnet_configs['dropout'],
-                                          n_classes=self.rnet_configs['n_classes'])
-    
-
-        self.onet = self._build_pnet_model(input_shape=self.onet_configs['input_shape'], 
-                                          batch_norm=self.onet_configs['batch_norm'], 
-                                          dropout=self.onet_configs['dropout'],
-                                          n_classes=self.onet_configs['n_classes'])
-        
-        ### Load weights ###
-        self.pnet.load_weights(self.pnet_weights)
-        self.rnet.load_weights(self.rnet_weights)
-        self.onet.load_weights(self.onet_weights)
-
-    ### Implement the P-Net architecture ###
-    def _conv_block(self, in_filters, out_filters, kernel_size=3, batch_norm=False):
-        inputs = Input(shape=(None, None, in_filters))
-        p_layer = Conv2D(out_filters, kernel_size=kernel_size, strides=(1, 1), padding="valid", kernel_regularizer=l2(2e-4))(inputs)
-        if(batch_norm) : p_layer = BatchNormalization()(p_layer)
+orm) : p_layer = BatchNormalization()(p_layer)
         p_layer = PReLU(shared_axes=[1, 2])(p_layer)
 
         p_layer = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding="same")(p_layer)
@@ -90,12 +44,10 @@ class MTCNN:
     def __nms(self, boxes, s, threshold, method):
         """
             Non Maximum Suppression.
-
             Params:
                 @param boxes: np array with bounding boxes.
                 @param threshold:
                 @param method: NMS method to apply. Available values ('Min', 'Union')
-
             Return:
                 pick : An array of indices selected.
         """
@@ -142,7 +94,6 @@ class MTCNN:
     def stage1_pnet(self, raw_img, threshold=0.5, nms_threshold=0.5,
                     scale_factor=2.0, min_img_size = 48, padding = 0.15, visualize=False):
         '''
-
         '''
         H, W = raw_img.shape[:2]
         images = [raw_img]
@@ -274,4 +225,3 @@ for box, label in zip(boxes, labels):
     img = cv2.rectangle(img, (x, y), (x+w, y+h), (0,255,0), 2)
 
 cv2.imwrite(f'outputs/{test_file}', img)
-
