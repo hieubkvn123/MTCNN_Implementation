@@ -100,6 +100,7 @@ validation_steps = val_loader.dataset_len
 train(rnet, train_dataset, val_dataset, rnet_weights, 
         logdir=rnet_tensorboard_logdir,
         n_classes=n_classes, 
+        box_reg='mse',
         steps_per_epoch=steps_per_epoch, 
         validation_steps=validation_steps, 
         epochs=epochs, 

@@ -69,7 +69,7 @@ def train_step(model, batch, box_reg='giou', n_classes=10):
         if(box_reg == 'giou'):
             bbx_loss = giou(bbox, pr_bbox)
         else:
-            bbx_loss = mse(bbox, pre_bbox)
+            bbx_loss = mse(bbox, pr_bbox)
 
         loss = cls_loss + bbx_loss
 
@@ -79,7 +79,7 @@ def train_step(model, batch, box_reg='giou', n_classes=10):
     return cls_loss, bbx_loss, acc
 
 @tf.function
-def validation_step(model, batch, n_classes=10):
+def validation_step(model, batch, n_classes=10, box_reg='giou'):
     img, (bbox, prob) = batch
     bbox = tf.expand_dims(bbox, axis=1)
     bbox = tf.expand_dims(bbox, axis=1)
@@ -88,7 +88,10 @@ def validation_step(model, batch, n_classes=10):
     prob = tf.one_hot(prob, depth=n_classes)
     pr_prob, pr_bbox = model(img, training=False)
 
-    bbx_loss = giou(bbox, pr_bbox)
+    if(box_reg == 'giou'):
+        bbx_loss = giou(bbox, pr_bbox)
+    else:
+        bbx_loss = mse(bbox, pr_bbox)
     cls_loss = bce(prob, pr_prob)
     acc = accuracy(tf.math.argmax(prob, axis=3), tf.math.argmax(pr_prob, axis=3))
 
@@ -177,7 +180,7 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', box_reg='gio
 
             for j in range(validation_steps // 5):
                 batch = next(iter(val_dataset))
-                cls_loss, bbox_loss, acc = validation_step(model, batch, n_classes=n_classes)
+                cls_loss, bbox_loss, acc = validation_step(model, batch, n_classes=n_classes, box_reg=box_reg)
                 cls_losses.append(cls_loss)
                 box_losses.append(bbox_loss)
                 accuracies.append(acc)

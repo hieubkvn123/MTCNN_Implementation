@@ -52,7 +52,7 @@ pnet_configs = f'weights/{weights_dir}/pnet.json'
 #train_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/train"
 #val_dir = "/home/minhhieu/Desktop/Hieu/datasets/DOTA/train_yolo/val"
 
-input_dim = 12 # 48
+input_dim = 12
 epochs = 1000 # 500
 batch_size = 16
 
@@ -66,12 +66,12 @@ if(os.path.exists(pnet_tensorboard_logdir)):
     
 ### Loading dataset ###
 ### Creating the train loader ###
-train_loader = DataLoader(train_dir, format_='darknet', preprocess='standard', annot_format='corners',
+train_loader = DataLoader(train_dir, format_='darknet', preprocess='default', annot_format='corners',
                     color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 
 ### Creating the test loader ###
-val_loader = DataLoader(val_dir, format_='darknet', preprocess='standard', annot_format='corners',
+val_loader = DataLoader(val_dir, format_='darknet', preprocess='default', annot_format='corners',
                     color_space='rgb', img_size=input_dim, batch_size=batch_size,
                    crop_to_bounding_box=False)
 
@@ -109,5 +109,6 @@ train(pnet, train_dataset, val_dataset, pnet_weights,
         epochs=epochs, 
         make_conf_map=False,
         early_stopping=True,
-        patience=2)
+        box_reg='mse',
+        patience=4)
 print('[INFO] Training halted, plotting training history ... ')
