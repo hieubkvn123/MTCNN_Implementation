@@ -109,6 +109,6 @@ train(pnet, train_dataset, val_dataset, pnet_weights,
         epochs=epochs, 
         make_conf_map=False,
         early_stopping=True,
-        box_reg='mse',
+        box_reg='giou',
         patience=4)
 print('[INFO] Training halted, plotting training history ... ')
