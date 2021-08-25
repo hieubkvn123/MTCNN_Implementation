@@ -56,13 +56,14 @@ input_dim = 12
 epochs = 1000 # 500
 batch_size = 16
 
+### If we are training a new model ###
 if(not os.path.exists(f'weights/{weights_dir}')):
     print('[INFO] Created weight directory ...')
     os.mkdir(f'weights/{weights_dir}')
-    
-if(os.path.exists(pnet_tensorboard_logdir)):
-    print('[INFO] Clearing P-Net log directory ... ')
-    shutil.rmtree(pnet_tensorboard_logdir)
+        
+    if(os.path.exists(pnet_tensorboard_logdir)):
+        print('[INFO] Clearing P-Net log directory ... ')
+        shutil.rmtree(pnet_tensorboard_logdir)
     
 ### Loading dataset ###
 ### Creating the train loader ###
@@ -85,30 +86,47 @@ configs = {
     'input_shape' : input_dim,
     'batch_norm' : True,
     'dropout' : True,
-    'n_classes' : n_classes
+    'n_classes' : n_classes,
+    'initial_epoch' : 0
 }
 
-print(f'[INFO] Storing P-Net configuration to {pnet_configs}')
-with open(pnet_configs, 'w') as config_file:
-    json.dump(configs, config_file, indent=4, sort_keys=True)
+if(not os.path.exists(pnet_configs)):
+    print(f'[INFO] Storing P-Net configuration to {pnet_configs}')
+    with open(pnet_configs, 'w') as config_file:
+        json.dump(configs, config_file, indent=4, sort_keys=True)
+else:
+    # Reload the configs
+    f = open(pnet_configs, 'r')
+    configs = json.load(f)
+    f.close()
 
 ### Experimenting with l2 normalization on the final logit layer ###
 #pnet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
-#                        n_classes=configs['n_classes'], l2_norm=True)
+#                        n_classes=configs['n_classes'], l2_norm=False)
 
 pnet = build_residual_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
                         n_classes=configs['n_classes'], l2_norm=True)
 print(pnet.summary())
 
-### Start training ###
-train(pnet, train_dataset, val_dataset, pnet_weights, 
-        logdir=pnet_tensorboard_logdir,
-        n_classes=n_classes, 
-        steps_per_epoch=steps_per_epoch, 
-        validation_steps=validation_steps, 
-        epochs=epochs, 
-        make_conf_map=False,
-        early_stopping=True,
-        box_reg='giou',
-        patience=4)
-print('[INFO] Training halted, plotting training history ... ')
+while(True): # Loop until keyboard interrupted
+    try:
+        ### Start training ###
+        last_epoch = train(pnet, train_dataset, val_dataset, pnet_weights, 
+                logdir=pnet_tensorboard_logdir,
+                n_classes=n_classes, 
+                steps_per_epoch=steps_per_epoch, 
+                validation_steps=validation_steps, 
+                epochs=epochs, 
+                make_conf_map=False,
+                early_stopping=True,
+                box_reg='giou',
+                patience=4,
+                initial_epoch=configs['initial_epoch'])
+
+        # Save last epoch as initial epoch to configs
+        configs['initial_epoch'] = last_epoch
+        with open(pnet_configs, 'w') as config_file:
+            print('[INFO] Saving configs ...')
+            json.dump(configs, config_file, indent=4, sort_keys=True)
+    except KeyboardInterrupt:
+        break

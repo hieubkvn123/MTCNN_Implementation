@@ -105,7 +105,7 @@ def _overfitting(losses, patience):
 
 def train(model, dataset, val_dataset, weights_file, logdir='logs', box_reg='giou', 
         n_classes=10, steps_per_epoch=1000, validation_steps=100, 
-        epochs=100, patience=15, make_conf_map=False, early_stopping=False):
+        epochs=100, patience=15, make_conf_map=False, early_stopping=False, initial_epoch=0):
     '''
         Parameters:
         @model : The tensorflow-keras model to be trained
@@ -139,100 +139,107 @@ def train(model, dataset, val_dataset, weights_file, logdir='logs', box_reg='gio
         }
     }
 
-    for i in range(epochs):
-        print(f'Epoch {i+1}/{epochs}')
-        with tqdm.tqdm(total=steps_per_epoch) as pbar:
-            cls_losses = []
-            box_losses = []
-            accuracies = []
-            for j in range(steps_per_epoch):
-                batch = next(iter(dataset))
+    try:
+        last_epoch = initial_epoch
+        for i in range(epochs):
+            last_epoch += 1
+            print(f'Epoch {i+1}/{epochs}')
+            with tqdm.tqdm(total=steps_per_epoch) as pbar:
+                cls_losses = []
+                box_losses = []
+                accuracies = []
+                for j in range(steps_per_epoch):
+                    batch = next(iter(dataset))
 
-                cls_loss, bbox_loss, acc = train_step(model, batch, box_reg=box_reg, n_classes=n_classes)
-                cls_loss = cls_loss.numpy()
-                bbox_loss = bbox_loss.numpy()
-                acc = acc.numpy()
+                    cls_loss, bbox_loss, acc = train_step(model, batch, box_reg=box_reg, n_classes=n_classes)
+                    cls_loss = cls_loss.numpy()
+                    bbox_loss = bbox_loss.numpy()
+                    acc = acc.numpy()
 
-                cls_losses.append(cls_loss)
-                box_losses.append(bbox_loss)
-                accuracies.append(acc)
+                    cls_losses.append(cls_loss)
+                    box_losses.append(bbox_loss)
+                    accuracies.append(acc)
 
-                if((j+1) % 100 == 0 and make_conf_map):
-                    num_gif_files += 1
-                    make_pnet_confidence_map(model, 'test/test.png', num_gif_files)
+                    if((j+1) % 100 == 0 and make_conf_map):
+                        num_gif_files += 1
+                        make_pnet_confidence_map(model, 'test/test.png', num_gif_files)
 
-                pbar.set_postfix({
-                    'cls_loss': f'{np.array(cls_losses).mean():.4f}',
-                    'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
-                    'accuracy' : f'{acc:.4f}'
-                })
-                pbar.update(1)
+                    pbar.set_postfix({
+                        'cls_loss': f'{np.array(cls_losses).mean():.4f}',
+                        'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
+                        'accuracy' : f'{acc:.4f}'
+                    })
+                    pbar.update(1)
 
-            summary['train_bbox_loss'] = np.array(box_losses).mean()
-            summary['train_cls_loss'] = np.array(cls_losses).mean()
-            summary['train_acc'] = np.array(accuracies).mean()
+                summary['train_bbox_loss'] = np.array(box_losses).mean()
+                summary['train_cls_loss'] = np.array(cls_losses).mean()
+                summary['train_acc'] = np.array(accuracies).mean()
 
-        print('Validating ... ')
-        with tqdm.tqdm(total=validation_steps // 5, colour='green') as pbar:
-            cls_losses = []
-            box_losses = []
-            accuracies = []
+            print('Validating ... ')
+            with tqdm.tqdm(total=validation_steps // 5, colour='green') as pbar:
+                cls_losses = []
+                box_losses = []
+                accuracies = []
 
-            for j in range(validation_steps // 5):
-                batch = next(iter(val_dataset))
-                cls_loss, bbox_loss, acc = validation_step(model, batch, n_classes=n_classes, box_reg=box_reg)
-                cls_losses.append(cls_loss)
-                box_losses.append(bbox_loss)
-                accuracies.append(acc)
+                for j in range(validation_steps // 5):
+                    batch = next(iter(val_dataset))
+                    cls_loss, bbox_loss, acc = validation_step(model, batch, n_classes=n_classes, box_reg=box_reg)
+                    cls_losses.append(cls_loss)
+                    box_losses.append(bbox_loss)
+                    accuracies.append(acc)
 
-                pbar.set_postfix({
-                    'cls_loss' : f'{np.array(cls_losses).mean():.4f}',
-                    'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
-                    'accuracy' : f'{acc:.2f}'
-                })
-                pbar.update(1)
+                    pbar.set_postfix({
+                        'cls_loss' : f'{np.array(cls_losses).mean():.4f}',
+                        'bbox_loss' : f'{np.array(box_losses).mean():.4f}',
+                        'accuracy' : f'{acc:.2f}'
+                    })
+                    pbar.update(1)
 
-            summary['val_bbox_loss'] = np.array(box_losses).mean()
-            summary['val_cls_loss'] = np.array(cls_losses).mean()
-            summary['val_acc'] = np.array(accuracies).mean()
-       
-        # Log bounding box losses to tensorboard log dir
-        writer.add_scalars('bounding_box_loss', {
-            'train' : summary['train_bbox_loss'],
-            'val' : summary['val_bbox_loss']
-        }, i)
+                summary['val_bbox_loss'] = np.array(box_losses).mean()
+                summary['val_cls_loss'] = np.array(cls_losses).mean()
+                summary['val_acc'] = np.array(accuracies).mean()
+           
+            # Log bounding box losses to tensorboard log dir
+            writer.add_scalars('bounding_box_loss', {
+                'train' : summary['train_bbox_loss'],
+                'val' : summary['val_bbox_loss']
+            }, last_epoch)
 
-        # Log classification losses to tensorboard log dir
-        writer.add_scalars('classification_loss', {
-            'train' : summary['train_cls_loss'],
-            'val' : summary['val_cls_loss']
-        }, i)
+            # Log classification losses to tensorboard log dir
+            writer.add_scalars('classification_loss', {
+                'train' : summary['train_cls_loss'],
+                'val' : summary['val_cls_loss']
+            }, last_epoch)
 
-        # Log accuracies to tensorboard log dir
-        writer.add_scalars('accuracy', {
-            'train' : summary['train_acc'],
-            'val' : summary['val_acc']
-        }, i)
+            # Log accuracies to tensorboard log dir
+            writer.add_scalars('accuracy', {
+                'train' : summary['train_acc'],
+                'val' : summary['val_acc']
+            }, last_epoch)
 
-        writer.flush()
+            writer.flush()
 
-        # Append information into the history log
-        history['train']['cls'].append(summary['train_cls_loss'])
-        history['train']['bbox'].append(summary['train_bbox_loss'])
-        history['val']['cls'].append(summary['val_cls_loss'])
-        history['val']['bbox'].append(summary['val_bbox_loss'])
+            # Append information into the history log
+            history['train']['cls'].append(summary['train_cls_loss'])
+            history['train']['bbox'].append(summary['train_bbox_loss'])
+            history['val']['cls'].append(summary['val_cls_loss'])
+            history['val']['bbox'].append(summary['val_bbox_loss'])
 
-        # Check if the model is currently overfitting
-        if(len(history['val']['cls']) >= patience): # If patience if p, at least p epochs must be trained to consider early stopping
-            if(_overfitting(history['val']['cls'], patience) or _overfitting(history['val']['bbox'], patience)):
-                # If early stopping is set, break the training loop
-                if(early_stopping):
-                    break
-    
-        if(len(history['val']['cls']) >= 2):
-            if(not _overfitting(history['val']['cls'], 2)):
+            # Check if the model is currently overfitting
+            if(len(history['val']['cls']) >= patience): # If patience if p, at least p epochs must be trained to consider early stopping
+                if(_overfitting(history['val']['cls'], patience) or _overfitting(history['val']['bbox'], patience)):
+                    # If early stopping is set, break the training loop
+                    if(early_stopping):
+                        break
+        
+            if(len(history['val']['cls']) >= 2):
+                if(not _overfitting(history['val']['cls'], 2)):
+                    print('Saving model weights to ', weights_file, ' ... ')
+                    model.save_weights(weights_file)
+            else:
                 print('Saving model weights to ', weights_file, ' ... ')
                 model.save_weights(weights_file)
-        else:
-            print('Saving model weights to ', weights_file, ' ... ')
-            model.save_weights(weights_file)
+    except KeyboardInterrupt:
+        print('[INFO] Training interrupted ...')
+
+    return last_epoch

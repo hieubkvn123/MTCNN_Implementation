@@ -1,6 +1,7 @@
 {
     "batch_norm": true,
     "dropout": true,
+    "initial_epoch": 578,
     "input_shape": 12,
     "n_classes": 2
 }

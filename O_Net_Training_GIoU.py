@@ -59,9 +59,9 @@ if(not os.path.exists(f'weights/{weights_dir}')):
     print('[INFO] Created weight directory ...')
     os.mkdir(f'weights/{weights_dir}')
     
-if(os.path.exists(onet_tensorboard_logdir)):
-    print('[INFO] Clearing O-Net log directory ... ')
-    shutil.rmtree(onet_tensorboard_logdir)
+    if(os.path.exists(onet_tensorboard_logdir)):
+        print('[INFO] Clearing O-Net log directory ... ')
+        shutil.rmtree(onet_tensorboard_logdir)
 
 ### Loading dataset ###
 ### Creating the train loader ###
@@ -82,13 +82,21 @@ configs = {
     'input_shape' : input_dim*4,
     'batch_norm' : True,
     'dropout' : True,
-    'n_classes' : n_classes
+    'n_classes' : n_classes,
+    'initial_epoch' : 0
 }
 onet = build_pnet_model(input_shape=configs['input_shape'], batch_norm=configs['batch_norm'], dropout=configs['dropout'],
                         n_classes=configs['n_classes'], l2_norm=True)
-print(f'[INFO] Storing O-Net configuration to {onet_configs}')
-with open(onet_configs, 'w') as config_file:
-    json.dump(configs, config_file, indent=4, sort_keys=True)
+
+if(not os.path.exists(onet_configs)):
+    print(f'[INFO] Storing O-Net configuration to {onet_configs}')
+    with open(onet_configs, 'w') as config_file:
+        json.dump(configs, config_file, indent=4, sort_keys=True)
+else:
+    # Reload the configs
+    f = open(onet_configs, 'r')
+    configs = json.load(f)
+    f.close()
 
 print(onet.summary())
 
@@ -96,11 +104,20 @@ print(onet.summary())
 steps_per_epoch = train_loader.dataset_len
 validation_steps = train_loader.val_len
 
-train(onet, train_dataset, val_dataset, onet_weights, 
-        logdir=onet_tensorboard_logdir,
-        n_classes=n_classes, 
-        steps_per_epoch=steps_per_epoch, 
-        validation_steps=validation_steps, 
-        epochs=epochs, 
-        make_conf_map=False)
-print('[INFO] Training halted, plotting training history ... ')
+while(True):
+    try:
+        train(onet, train_dataset, val_dataset, onet_weights, 
+                logdir=onet_tensorboard_logdir,
+                n_classes=n_classes, 
+                steps_per_epoch=steps_per_epoch, 
+                validation_steps=validation_steps, 
+                epochs=epochs, 
+                make_conf_map=False)
+
+        # Save last epoch as initial epoch to configs
+        configs['initial_epoch'] = last_epoch
+        with open(onet_configs, 'w') as config_file:
+            print('[INFO] Saving configs ...')
+            json.dump(configs, config_file, indent=4, sort_keys=True)
+    except KeyboardInterrupt:
+        break
